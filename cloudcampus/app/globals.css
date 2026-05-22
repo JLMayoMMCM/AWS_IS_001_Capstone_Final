@@ -8,8 +8,12 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-mono);
   --font-heading: var(--font-sans);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -67,6 +71,10 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
+  --success: oklch(0.55 0.15 145);
+  --success-foreground: oklch(0.985 0 0);
+  --warning: oklch(0.7 0.15 75);
+  --warning-foreground: oklch(0.205 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -102,6 +110,10 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
+  --success: oklch(0.65 0.15 145);
+  --success-foreground: oklch(0.985 0 0);
+  --warning: oklch(0.75 0.15 75);
+  --warning-foreground: oklch(0.205 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -127,4 +139,44 @@
   html {
     @apply font-sans;
   }
+}
+
+/* Skip-to-content link: visually hidden until focused (WIRE §7, NFR-USE-10). */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+}
+.skip-link:focus {
+  left: 1rem;
+  top: 1rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius);
+  background: var(--background);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+
+/*
+ * Diagonal-stripe placeholder for image slots that have no asset yet.
+ * Used by components/cloudcampus/placeholder-image.tsx.
+ */
+.ph-stripes {
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--muted) 0,
+    var(--muted) 8px,
+    var(--background) 8px,
+    var(--background) 16px
+  );
+}
+.dark .ph-stripes {
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--muted) 0,
+    var(--muted) 8px,
+    oklch(0.2 0 0) 8px,
+    oklch(0.2 0 0) 16px
+  );
 }

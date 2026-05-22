@@ -1,0 +1,42 @@
+# Local development services (SRS NFR-POR-02): PostgreSQL plus an
+# S3-compatible store (MinIO). Production uses Amazon RDS and Amazon S3.
+#
+#   docker compose up -d
+#   npm run db:migrate && npm run db:seed
+
+services:
+  db:
+    image: postgres:16
+    container_name: cloudcampus-db
+    environment:
+      POSTGRES_USER: cloudcampus
+      POSTGRES_PASSWORD: cloudcampus
+      POSTGRES_DB: cloudcampus
+    ports:
+      - "5432:5432"
+    volumes:
+      - cloudcampus-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cloudcampus"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # S3-compatible object storage for local development.
+  # Console: http://localhost:9001  ·  API: http://localhost:9000
+  storage:
+    image: minio/minio
+    container_name: cloudcampus-storage
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: cloudcampus
+      MINIO_ROOT_PASSWORD: cloudcampus-dev-secret
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - cloudcampus-storage:/data
+
+volumes:
+  cloudcampus-db:
+  cloudcampus-storage:

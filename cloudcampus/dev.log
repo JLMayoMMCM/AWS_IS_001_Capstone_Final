@@ -1,0 +1,1471 @@
+
+> cloudcampus@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.8.119:3000
+✓ Ready in 363ms
+
+ GET /sw.js 404 in 906ms (next.js: 865ms, application-code: 40ms)
+ GET / 200 in 1914ms (next.js: 1586ms, application-code: 328ms)
+[browser] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). 
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+      <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+        <LoadingBoundary name="/" loading={null}>
+          <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                    <SegmentViewNode type="layout" pagePath="(public)/l...">
+                      <SegmentTrieNode>
+                      <PublicLayout>
+                        <a>
+                        <SiteHeader>
+                          <header className="sticky top...">
+                            <div className="mx-auto fl...">
+                              <LinkComponent>
+                              <nav>
+                              <div className="flex items...">
+-                               <button
+-                                 data-slot="button"
+-                                 data-variant="ghost"
+-                                 data-size="icon"
+-                                 className={"group/button inline-flex shrink-0 items-center justify-center rounded-4..."}
+-                                 aria-label="Open menu"
+-                                 type="button"
+-                                 aria-haspopup="dialog"
+-                                 aria-expanded="false"
+-                                 aria-controls="radix-_R_3qknelb_"
+-                                 data-state="closed"
+-                               >
+                        ...
+                  ...
+      ...
+
+    at div (unknown)
+    at SiteHeader (components\cloudcampus\site-header.tsx:68:9)
+    at PublicLayout (app\(public)\layout.tsx:16:7)
+  66 |         </nav>
+  67 |
+> 68 |         <div className="flex items-center gap-1">
+     |         ^
+  69 |           <ThemeToggle />
+  70 |           <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+  71 |             <Link href="/login">Login</Link>
+ GET /sw.js 404 in 53ms (next.js: 4ms, application-code: 49ms)
+ GET /sw.js 404 in 38ms (next.js: 4ms, application-code: 34ms)
+ GET / 200 in 82ms (next.js: 3ms, application-code: 79ms)
+ GET / 200 in 83ms (next.js: 3ms, application-code: 80ms)
+[browser] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). 
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+      <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+        <LoadingBoundary name="/" loading={null}>
+          <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                    <SegmentViewNode type="layout" pagePath="(public)/l...">
+                      <SegmentTrieNode>
+                      <PublicLayout>
+                        <a>
+                        <SiteHeader>
+                          <header className="sticky top...">
+                            <div className="mx-auto fl...">
+                              <LinkComponent>
+                              <nav>
+                              <div className="flex items...">
+-                               <button
+-                                 data-slot="button"
+-                                 data-variant="ghost"
+-                                 data-size="icon"
+-                                 className={"group/button inline-flex shrink-0 items-center justify-center rounded-4..."}
+-                                 aria-label="Open menu"
+-                                 type="button"
+-                                 aria-haspopup="dialog"
+-                                 aria-expanded="false"
+-                                 aria-controls="radix-_R_3qknelb_"
+-                                 data-state="closed"
+-                               >
+                        ...
+                  ...
+      ...
+
+    at div (unknown)
+    at SiteHeader (components\cloudcampus\site-header.tsx:68:9)
+    at PublicLayout (app\(public)\layout.tsx:16:7)
+  66 |         </nav>
+  67 |
+> 68 |         <div className="flex items-center gap-1">
+     |         ^
+  69 |           <ThemeToggle />
+  70 |           <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+  71 |             <Link href="/login">Login</Link>
+ GET /sw.js 404 in 37ms (next.js: 4ms, application-code: 33ms)
+ GET /sw.js 404 in 27ms (next.js: 4ms, application-code: 24ms)
+ GET / 200 in 76ms (next.js: 3ms, application-code: 73ms)
+[browser] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). 
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+      <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+        <LoadingBoundary name="/" loading={null}>
+          <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                    <SegmentViewNode type="layout" pagePath="(public)/l...">
+                      <SegmentTrieNode>
+                      <PublicLayout>
+                        <a>
+                        <SiteHeader>
+                          <header className="sticky top...">
+                            <div className="mx-auto fl...">
+                              <LinkComponent>
+                              <nav>
+                              <div className="flex items...">
+-                               <button
+-                                 data-slot="button"
+-                                 data-variant="ghost"
+-                                 data-size="icon"
+-                                 className={"group/button inline-flex shrink-0 items-center justify-center rounded-4..."}
+-                                 aria-label="Open menu"
+-                                 type="button"
+-                                 aria-haspopup="dialog"
+-                                 aria-expanded="false"
+-                                 aria-controls="radix-_R_3qknelb_"
+-                                 data-state="closed"
+-                               >
+                        ...
+                  ...
+      ...
+
+    at div (unknown)
+    at SiteHeader (components\cloudcampus\site-header.tsx:68:9)
+    at PublicLayout (app\(public)\layout.tsx:16:7)
+  66 |         </nav>
+  67 |
+> 68 |         <div className="flex items-center gap-1">
+     |         ^
+  69 |           <ThemeToggle />
+  70 |           <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+  71 |             <Link href="/login">Login</Link>
+ GET /sw.js 404 in 32ms (next.js: 4ms, application-code: 28ms)
+ GET / 200 in 73ms (next.js: 2ms, application-code: 71ms)
+[browser] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). 
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+      <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+        <LoadingBoundary name="/" loading={null}>
+          <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                    <SegmentViewNode type="layout" pagePath="(public)/l...">
+                      <SegmentTrieNode>
+                      <PublicLayout>
+                        <a>
+                        <SiteHeader>
+                          <header className="sticky top...">
+                            <div className="mx-auto fl...">
+                              <LinkComponent>
+                              <nav>
+                              <div className="flex items...">
+-                               <button
+-                                 data-slot="button"
+-                                 data-variant="ghost"
+-                                 data-size="icon"
+-                                 className={"group/button inline-flex shrink-0 items-center justify-center rounded-4..."}
+-                                 aria-label="Open menu"
+-                                 type="button"
+-                                 aria-haspopup="dialog"
+-                                 aria-expanded="false"
+-                                 aria-controls="radix-_R_3qknelb_"
+-                                 data-state="closed"
+-                               >
+                        ...
+                  ...
+      ...
+
+    at div (unknown)
+    at SiteHeader (components\cloudcampus\site-header.tsx:68:9)
+    at PublicLayout (app\(public)\layout.tsx:16:7)
+  66 |         </nav>
+  67 |
+> 68 |         <div className="flex items-center gap-1">
+     |         ^
+  69 |           <ThemeToggle />
+  70 |           <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+  71 |             <Link href="/login">Login</Link>
+ GET /sw.js 404 in 29ms (next.js: 3ms, application-code: 25ms)
+ GET / 200 in 72ms (next.js: 3ms, application-code: 69ms)
+[browser] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). 
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+      <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+        <LoadingBoundary name="/" loading={null}>
+          <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                    <SegmentViewNode type="layout" pagePath="(public)/l...">
+                      <SegmentTrieNode>
+                      <PublicLayout>
+                        <a>
+                        <SiteHeader>
+                          <header className="sticky top...">
+                            <div className="mx-auto fl...">
+                              <LinkComponent>
+                              <nav>
+                              <div className="flex items...">
+-                               <button
+-                                 data-slot="button"
+-                                 data-variant="ghost"
+-                                 data-size="icon"
+-                                 className={"group/button inline-flex shrink-0 items-center justify-center rounded-4..."}
+-                                 aria-label="Open menu"
+-                                 type="button"
+-                                 aria-haspopup="dialog"
+-                                 aria-expanded="false"
+-                                 aria-controls="radix-_R_3qknelb_"
+-                                 data-state="closed"
+-                               >
+                        ...
+                  ...
+      ...
+
+    at div (unknown)
+    at SiteHeader (components\cloudcampus\site-header.tsx:68:9)
+    at PublicLayout (app\(public)\layout.tsx:16:7)
+  66 |         </nav>
+  67 |
+> 68 |         <div className="flex items-center gap-1">
+     |         ^
+  69 |           <ThemeToggle />
+  70 |           <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+  71 |             <Link href="/login">Login</Link>
+ GET /sw.js 404 in 43ms (next.js: 4ms, application-code: 39ms)
+ GET / 200 in 119ms (next.js: 2ms, application-code: 116ms)
+[browser] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). 
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+      <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+        <LoadingBoundary name="/" loading={null}>
+          <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                    <SegmentViewNode type="layout" pagePath="(public)/l...">
+                      <SegmentTrieNode>
+                      <PublicLayout>
+                        <a>
+                        <SiteHeader>
+                          <header className="sticky top...">
+                            <div className="mx-auto fl...">
+                              <LinkComponent>
+                              <nav>
+                              <div className="flex items...">
+-                               <button
+-                                 data-slot="button"
+-                                 data-variant="ghost"
+-                                 data-size="icon"
+-                                 className={"group/button inline-flex shrink-0 items-center justify-center rounded-4..."}
+-                                 aria-label="Open menu"
+-                                 type="button"
+-                                 aria-haspopup="dialog"
+-                                 aria-expanded="false"
+-                                 aria-controls="radix-_R_3qknelb_"
+-                                 data-state="closed"
+-                               >
+                        ...
+                  ...
+      ...
+
+    at div (unknown)
+    at SiteHeader (components\cloudcampus\site-header.tsx:68:9)
+    at PublicLayout (app\(public)\layout.tsx:16:7)
+  66 |         </nav>
+  67 |
+> 68 |         <div className="flex items-center gap-1">
+     |         ^
+  69 |           <ThemeToggle />
+  70 |           <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+  71 |             <Link href="/login">Login</Link>
+ GET /sw.js 404 in 25ms (next.js: 3ms, application-code: 22ms)
+ GET / 200 in 71ms (next.js: 2ms, application-code: 69ms)
+[browser] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). 
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+      <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+        <LoadingBoundary name="/" loading={null}>
+          <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                    <SegmentViewNode type="layout" pagePath="(public)/l...">
+                      <SegmentTrieNode>
+                      <PublicLayout>
+                        <a>
+                        <SiteHeader>
+                          <header className="sticky top...">
+                            <div className="mx-auto fl...">
+                              <LinkComponent>
+                              <nav>
+                              <div className="flex items...">
+-                               <button
+-                                 data-slot="button"
+-                                 data-variant="ghost"
+-                                 data-size="icon"
+-                                 className={"group/button inline-flex shrink-0 items-center justify-center rounded-4..."}
+-                                 aria-label="Open menu"
+-                                 type="button"
+-                                 aria-haspopup="dialog"
+-                                 aria-expanded="false"
+-                                 aria-controls="radix-_R_3qknelb_"
+-                                 data-state="closed"
+-                               >
+                        ...
+                  ...
+      ...
+
+    at div (unknown)
+    at SiteHeader (components\cloudcampus\site-header.tsx:68:9)
+    at PublicLayout (app\(public)\layout.tsx:16:7)
+  66 |         </nav>
+  67 |
+> 68 |         <div className="flex items-center gap-1">
+     |         ^
+  69 |           <ThemeToggle />
+  70 |           <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+  71 |             <Link href="/login">Login</Link>
+ GET /sw.js 404 in 31ms (next.js: 3ms, application-code: 28ms)
+ GET / 200 in 75ms (next.js: 3ms, application-code: 73ms)
+[browser] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). 
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+      <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+        <LoadingBoundary name="/" loading={null}>
+          <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                    <SegmentViewNode type="layout" pagePath="(public)/l...">
+                      <SegmentTrieNode>
+                      <PublicLayout>
+                        <a>
+                        <SiteHeader>
+                          <header className="sticky top...">
+                            <div className="mx-auto fl...">
+                              <LinkComponent>
+                              <nav>
+                              <div className="flex items...">
+-                               <button
+-                                 data-slot="button"
+-                                 data-variant="ghost"
+-                                 data-size="icon"
+-                                 className={"group/button inline-flex shrink-0 items-center justify-center rounded-4..."}
+-                                 aria-label="Open menu"
+-                                 type="button"
+-                                 aria-haspopup="dialog"
+-                                 aria-expanded="false"
+-                                 aria-controls="radix-_R_3qknelb_"
+-                                 data-state="closed"
+-                               >
+                        ...
+                  ...
+      ...
+
+    at div (unknown)
+    at SiteHeader (components\cloudcampus\site-header.tsx:68:9)
+    at PublicLayout (app\(public)\layout.tsx:16:7)
+  66 |         </nav>
+  67 |
+> 68 |         <div className="flex items-center gap-1">
+     |         ^
+  69 |           <ThemeToggle />
+  70 |           <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+  71 |             <Link href="/login">Login</Link>
+ GET /sw.js 404 in 30ms (next.js: 3ms, application-code: 26ms)
+ GET / 200 in 72ms (next.js: 2ms, application-code: 70ms)
+[browser] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). 
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+      <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+        <LoadingBoundary name="/" loading={null}>
+          <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                    <SegmentViewNode type="layout" pagePath="(public)/l...">
+                      <SegmentTrieNode>
+                      <PublicLayout>
+                        <a>
+                        <SiteHeader>
+                          <header className="sticky top...">
+                            <div className="mx-auto fl...">
+                              <LinkComponent>
+                              <nav>
+                              <div className="flex items...">
+-                               <button
+-                                 data-slot="button"
+-                                 data-variant="ghost"
+-                                 data-size="icon"
+-                                 className={"group/button inline-flex shrink-0 items-center justify-center rounded-4..."}
+-                                 aria-label="Open menu"
+-                                 type="button"
+-                                 aria-haspopup="dialog"
+-                                 aria-expanded="false"
+-                                 aria-controls="radix-_R_3qknelb_"
+-                                 data-state="closed"
+-                               >
+                        ...
+                  ...
+      ...
+
+    at div (unknown)
+    at SiteHeader (components\cloudcampus\site-header.tsx:68:9)
+    at PublicLayout (app\(public)\layout.tsx:16:7)
+  66 |         </nav>
+  67 |
+> 68 |         <div className="flex items-center gap-1">
+     |         ^
+  69 |           <ThemeToggle />
+  70 |           <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+  71 |             <Link href="/login">Login</Link>
+ GET /sw.js 404 in 28ms (next.js: 3ms, application-code: 25ms)
+ GET /sw.js 404 in 32ms (next.js: 4ms, application-code: 29ms)
+✓ Compiled in 140ms
+ GET / 200 in 421ms (next.js: 294ms, application-code: 127ms)
+ GET / 200 in 234ms (next.js: 173ms, application-code: 62ms)
+ GET / 200 in 234ms (next.js: 204ms, application-code: 30ms)
+ GET / 200 in 194ms (next.js: 2ms, application-code: 192ms)
+[browser] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). 
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+      <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+        <LoadingBoundary name="/" loading={null}>
+          <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                    <SegmentViewNode type="layout" pagePath="(public)/l...">
+                      <SegmentTrieNode>
+                      <script>
+                      <script>
+                      <script>
+                      <PublicLayout>
+                        <a>
+                        <SiteHeader>
+                          <header className="sticky top...">
+                            <div className="mx-auto fl...">
+                              <LinkComponent>
+                              <nav>
+                              <div className="flex items...">
+-                               <button
+-                                 data-slot="button"
+-                                 data-variant="ghost"
+-                                 data-size="icon"
+-                                 className={"group/button inline-flex shrink-0 items-center justify-center rounded-4..."}
+-                                 aria-label="Open menu"
+-                                 type="button"
+-                                 aria-haspopup="dialog"
+-                                 aria-expanded="false"
+-                                 aria-controls="radix-_R_3qknelb_"
+-                                 data-state="closed"
+-                               >
+                        ...
+                  ...
+      ...
+
+    at div (unknown)
+    at SiteHeader (components\site-header.tsx:68:9)
+    at PublicLayout (app\(public)\layout.tsx:17:7)
+  66 |         </nav>
+  67 |
+> 68 |         <div className="flex items-center gap-1">
+     |         ^
+  69 |           <ThemeToggle />
+  70 |           <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+  71 |             <Link href="/login">Login</Link>
+ GET /sw.js 404 in 141ms (next.js: 68ms, application-code: 73ms)
+ GET /sw.js 404 in 25ms (next.js: 3ms, application-code: 22ms)
+ GET / 200 in 76ms (next.js: 2ms, application-code: 74ms)
+[browser] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). 
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+      <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+        <LoadingBoundary name="/" loading={null}>
+          <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                    <SegmentViewNode type="layout" pagePath="(public)/l...">
+                      <SegmentTrieNode>
+                      <script>
+                      <script>
+                      <script>
+                      <PublicLayout>
+                        <a>
+                        <SiteHeader>
+                          <header className="sticky top...">
+                            <div className="mx-auto fl...">
+                              <LinkComponent>
+                              <nav>
+                              <div className="flex items...">
+-                               <button
+-                                 data-slot="button"
+-                                 data-variant="ghost"
+-                                 data-size="icon"
+-                                 className={"group/button inline-flex shrink-0 items-center justify-center rounded-4..."}
+-                                 aria-label="Open menu"
+-                                 type="button"
+-                                 aria-haspopup="dialog"
+-                                 aria-expanded="false"
+-                                 aria-controls="radix-_R_3qknelb_"
+-                                 data-state="closed"
+-                               >
+                        ...
+                  ...
+      ...
+
+    at div (unknown)
+    at SiteHeader (components\site-header.tsx:68:9)
+    at PublicLayout (app\(public)\layout.tsx:17:7)
+  66 |         </nav>
+  67 |
+> 68 |         <div className="flex items-center gap-1">
+     |         ^
+  69 |           <ThemeToggle />
+  70 |           <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+  71 |             <Link href="/login">Login</Link>
+ GET /sw.js 404 in 27ms (next.js: 3ms, application-code: 24ms)
+ GET / 200 in 72ms (next.js: 2ms, application-code: 70ms)
+[browser] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). 
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+      <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+        <LoadingBoundary name="/" loading={null}>
+          <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                    <SegmentViewNode type="layout" pagePath="(public)/l...">
+                      <SegmentTrieNode>
+                      <script>
+                      <script>
+                      <script>
+                      <PublicLayout>
+                        <a>
+                        <SiteHeader>
+                          <header className="sticky top...">
+                            <div className="mx-auto fl...">
+                              <LinkComponent>
+                              <nav>
+                              <div className="flex items...">
+-                               <button
+-                                 data-slot="button"
+-                                 data-variant="ghost"
+-                                 data-size="icon"
+-                                 className={"group/button inline-flex shrink-0 items-center justify-center rounded-4..."}
+-                                 aria-label="Open menu"
+-                                 type="button"
+-                                 aria-haspopup="dialog"
+-                                 aria-expanded="false"
+-                                 aria-controls="radix-_R_3qknelb_"
+-                                 data-state="closed"
+-                               >
+                        ...
+                  ...
+      ...
+
+    at div (unknown)
+    at SiteHeader (components\site-header.tsx:68:9)
+    at PublicLayout (app\(public)\layout.tsx:17:7)
+  66 |         </nav>
+  67 |
+> 68 |         <div className="flex items-center gap-1">
+     |         ^
+  69 |           <ThemeToggle />
+  70 |           <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+  71 |             <Link href="/login">Login</Link>
+ GET /sw.js 404 in 30ms (next.js: 3ms, application-code: 27ms)
+ GET / 200 in 70ms (next.js: 3ms, application-code: 67ms)
+[browser] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). 
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+      <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+        <LoadingBoundary name="/" loading={null}>
+          <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                    <SegmentViewNode type="layout" pagePath="(public)/l...">
+                      <SegmentTrieNode>
+                      <script>
+                      <script>
+                      <script>
+                      <PublicLayout>
+                        <a>
+                        <SiteHeader>
+                          <header className="sticky top...">
+                            <div className="mx-auto fl...">
+                              <LinkComponent>
+                              <nav>
+                              <div className="flex items...">
+-                               <button
+-                                 data-slot="button"
+-                                 data-variant="ghost"
+-                                 data-size="icon"
+-                                 className={"group/button inline-flex shrink-0 items-center justify-center rounded-4..."}
+-                                 aria-label="Open menu"
+-                                 type="button"
+-                                 aria-haspopup="dialog"
+-                                 aria-expanded="false"
+-                                 aria-controls="radix-_R_3qknelb_"
+-                                 data-state="closed"
+-                               >
+                        ...
+                  ...
+      ...
+
+    at div (unknown)
+    at SiteHeader (components\site-header.tsx:68:9)
+    at PublicLayout (app\(public)\layout.tsx:17:7)
+  66 |         </nav>
+  67 |
+> 68 |         <div className="flex items-center gap-1">
+     |         ^
+  69 |           <ThemeToggle />
+  70 |           <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+  71 |             <Link href="/login">Login</Link>
+ GET /sw.js 404 in 27ms (next.js: 4ms, application-code: 24ms)
+ GET / 200 in 76ms (next.js: 2ms, application-code: 74ms)
+[browser] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). 
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+      <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+        <LoadingBoundary name="/" loading={null}>
+          <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                    <SegmentViewNode type="layout" pagePath="(public)/l...">
+                      <SegmentTrieNode>
+                      <script>
+                      <script>
+                      <script>
+                      <PublicLayout>
+                        <a>
+                        <SiteHeader>
+                          <header className="sticky top...">
+                            <div className="mx-auto fl...">
+                              <LinkComponent>
+                              <nav>
+                              <div className="flex items...">
+-                               <button
+-                                 data-slot="button"
+-                                 data-variant="ghost"
+-                                 data-size="icon"
+-                                 className={"group/button inline-flex shrink-0 items-center justify-center rounded-4..."}
+-                                 aria-label="Open menu"
+-                                 type="button"
+-                                 aria-haspopup="dialog"
+-                                 aria-expanded="false"
+-                                 aria-controls="radix-_R_3qknelb_"
+-                                 data-state="closed"
+-                               >
+                        ...
+                  ...
+      ...
+
+    at div (unknown)
+    at SiteHeader (components\site-header.tsx:68:9)
+    at PublicLayout (app\(public)\layout.tsx:17:7)
+  66 |         </nav>
+  67 |
+> 68 |         <div className="flex items-center gap-1">
+     |         ^
+  69 |           <ThemeToggle />
+  70 |           <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+  71 |             <Link href="/login">Login</Link>
+ GET /sw.js 404 in 28ms (next.js: 4ms, application-code: 25ms)
+ GET / 200 in 150ms (next.js: 2ms, application-code: 148ms)
+[browser] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). 
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+      <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+        <LoadingBoundary name="/" loading={null}>
+          <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                    <SegmentViewNode type="layout" pagePath="(public)/l...">
+                      <SegmentTrieNode>
+                      <script>
+                      <script>
+                      <script>
+                      <PublicLayout>
+                        <a>
+                        <SiteHeader>
+                          <header className="sticky top...">
+                            <div className="mx-auto fl...">
+                              <LinkComponent>
+                              <nav>
+                              <div className="flex items...">
+-                               <button
+-                                 data-slot="button"
+-                                 data-variant="ghost"
+-                                 data-size="icon"
+-                                 className={"group/button inline-flex shrink-0 items-center justify-center rounded-4..."}
+-                                 aria-label="Open menu"
+-                                 type="button"
+-                                 aria-haspopup="dialog"
+-                                 aria-expanded="false"
+-                                 aria-controls="radix-_R_3qknelb_"
+-                                 data-state="closed"
+-                               >
+                        ...
+                  ...
+      ...
+
+    at <unknown> (https://react.dev/link/hydration-mismatch)
+    at div (<anonymous>)
+    at SiteHeader (components\site-header.tsx:68:9)
+    at PublicLayout (app\(public)\layout.tsx:17:7)
+  66 |         </nav>
+  67 |
+> 68 |         <div className="flex items-center gap-1">
+     |         ^
+  69 |           <ThemeToggle />
+  70 |           <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+  71 |             <Link href="/login">Login</Link>
+ GET / 200 in 69ms (next.js: 2ms, application-code: 67ms)
+[browser] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). 
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+      <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+        <LoadingBoundary name="/" loading={null}>
+          <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={{...}} forbidden={undefined} unauthorized={undefined} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} segmentPath={[...]} ...>
+                    <SegmentViewNode type="layout" pagePath="(public)/l...">
+                      <SegmentTrieNode>
+                      <script>
+                      <script>
+                      <script>
+                      <PublicLayout>
+                        <a>
+                        <SiteHeader>
+                          <header className="sticky top...">
+                            <div className="mx-auto fl...">
+                              <LinkComponent>
+                              <nav>
+                              <div className="flex items...">
+-                               <button
+-                                 data-slot="button"
+-                                 data-variant="ghost"
+-                                 data-size="icon"
+-                                 className={"group/button inline-flex shrink-0 items-center justify-center rounded-4..."}
+-                                 aria-label="Open menu"
+-                                 type="button"
+-                                 aria-haspopup="dialog"
+-                                 aria-expanded="false"
+-                                 aria-controls="radix-_R_3qknelb_"
+-                                 data-state="closed"
+-                               >
+                        ...
+                  ...
+      ...
+
+    at div (unknown)
+    at SiteHeader (components\site-header.tsx:68:9)
+    at PublicLayout (app\(public)\layout.tsx:17:7)
+  66 |         </nav>
+  67 |
+> 68 |         <div className="flex items-center gap-1">
+     |         ^
+  69 |           <ThemeToggle />
+  70 |           <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+  71 |             <Link href="/login">Login</Link>
+ GET /sw.js 404 in 28ms (next.js: 3ms, application-code: 25ms)
+ GET /sw.js 404 in 24ms (next.js: 3ms, application-code: 21ms)
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/blog-card'
+Import map: aliased to relative './components/cards/blog-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/blog-card'
+Import map: aliased to relative './components/cards/blog-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/event-card'
+Import map: aliased to relative './components/cards/event-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/event-card'
+Import map: aliased to relative './components/cards/event-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/officer-card'
+Import map: aliased to relative './components/cards/officer-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/officer-card'
+Import map: aliased to relative './components/cards/officer-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/layout.tsx
+Module not found: Can't resolve '@/components/site-footer'
+Import map: aliased to relative './components/site-footer' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/layout.tsx
+Module not found: Can't resolve '@/components/site-footer'
+Import map: aliased to relative './components/site-footer' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/layout.tsx
+Module not found: Can't resolve '@/components/site-header'
+Import map: aliased to relative './components/site-header' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/layout.tsx
+Module not found: Can't resolve '@/components/site-header'
+Import map: aliased to relative './components/site-header' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/lib/placeholder-data'
+Import map: aliased to relative './lib/placeholder-data' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/lib/placeholder-data'
+Import map: aliased to relative './lib/placeholder-data' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/lib/placeholder-data'
+Import map: aliased to relative './lib/placeholder-data' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/lib/placeholder-data'
+Import map: aliased to relative './lib/placeholder-data' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/blog-card'
+Import map: aliased to relative './components/cards/blog-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/blog-card'
+Import map: aliased to relative './components/cards/blog-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/event-card'
+Import map: aliased to relative './components/cards/event-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/event-card'
+Import map: aliased to relative './components/cards/event-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/officer-card'
+Import map: aliased to relative './components/cards/officer-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/officer-card'
+Import map: aliased to relative './components/cards/officer-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/layout.tsx
+Module not found: Can't resolve '@/components/site-footer'
+Import map: aliased to relative './components/site-footer' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/layout.tsx
+Module not found: Can't resolve '@/components/site-footer'
+Import map: aliased to relative './components/site-footer' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/layout.tsx
+Module not found: Can't resolve '@/components/site-header'
+Import map: aliased to relative './components/site-header' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/layout.tsx
+Module not found: Can't resolve '@/components/site-header'
+Import map: aliased to relative './components/site-header' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/lib/placeholder-data'
+Import map: aliased to relative './lib/placeholder-data' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/lib/placeholder-data'
+Import map: aliased to relative './lib/placeholder-data' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/lib/placeholder-data'
+Import map: aliased to relative './lib/placeholder-data' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/lib/placeholder-data'
+Import map: aliased to relative './lib/placeholder-data' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/blog-card'
+Import map: aliased to relative './components/cards/blog-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/blog-card'
+Import map: aliased to relative './components/cards/blog-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/event-card'
+Import map: aliased to relative './components/cards/event-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/event-card'
+Import map: aliased to relative './components/cards/event-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/officer-card'
+Import map: aliased to relative './components/cards/officer-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/officer-card'
+Import map: aliased to relative './components/cards/officer-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/layout.tsx
+Module not found: Can't resolve '@/components/site-footer'
+Import map: aliased to relative './components/site-footer' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/layout.tsx
+Module not found: Can't resolve '@/components/site-footer'
+Import map: aliased to relative './components/site-footer' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/layout.tsx
+Module not found: Can't resolve '@/components/site-header'
+Import map: aliased to relative './components/site-header' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/layout.tsx
+Module not found: Can't resolve '@/components/site-header'
+Import map: aliased to relative './components/site-header' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/lib/placeholder-data'
+Import map: aliased to relative './lib/placeholder-data' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/lib/placeholder-data'
+Import map: aliased to relative './lib/placeholder-data' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/lib/placeholder-data'
+Import map: aliased to relative './lib/placeholder-data' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/lib/placeholder-data'
+Import map: aliased to relative './lib/placeholder-data' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/blog-card'
+Import map: aliased to relative './components/cards/blog-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/blog-card'
+Import map: aliased to relative './components/cards/blog-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/event-card'
+Import map: aliased to relative './components/cards/event-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/event-card'
+Import map: aliased to relative './components/cards/event-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/officer-card'
+Import map: aliased to relative './components/cards/officer-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/components/cards/officer-card'
+Import map: aliased to relative './components/cards/officer-card' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/layout.tsx
+Module not found: Can't resolve '@/components/site-footer'
+Import map: aliased to relative './components/site-footer' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/layout.tsx
+Module not found: Can't resolve '@/components/site-footer'
+Import map: aliased to relative './components/site-footer' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/layout.tsx
+Module not found: Can't resolve '@/components/site-header'
+Import map: aliased to relative './components/site-header' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/layout.tsx
+Module not found: Can't resolve '@/components/site-header'
+Import map: aliased to relative './components/site-header' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/lib/placeholder-data'
+Import map: aliased to relative './lib/placeholder-data' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/lib/placeholder-data'
+Import map: aliased to relative './lib/placeholder-data' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/lib/placeholder-data'
+Import map: aliased to relative './lib/placeholder-data' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./app/(public)/page.tsx
+Module not found: Can't resolve '@/lib/placeholder-data'
+Import map: aliased to relative './lib/placeholder-data' inside of [project]/
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+ GET / 404 in 1268ms (next.js: 1132ms, application-code: 135ms)
+ GET / 404 in 1271ms (next.js: 1188ms, application-code: 83ms)
+ GET / 404 in 1270ms (next.js: 1222ms, application-code: 48ms)
+ GET / 404 in 1270ms (next.js: 1204ms, application-code: 66ms)
+ GET / 404 in 1286ms (next.js: 1252ms, application-code: 34ms)
+ GET / 404 in 1269ms (next.js: 1251ms, application-code: 17ms)
+ GET / 404 in 110ms (next.js: 80ms, application-code: 30ms)
+ GET / 404 in 113ms (next.js: 33ms, application-code: 80ms)
+ GET / 404 in 111ms (next.js: 67ms, application-code: 44ms)
+ GET / 404 in 114ms (next.js: 13ms, application-code: 101ms)
+ GET / 404 in 110ms (next.js: 93ms, application-code: 16ms)
+ GET / 404 in 113ms (next.js: 53ms, application-code: 60ms)
+ GET /sw.js 404 in 71ms (next.js: 5ms, application-code: 66ms)
+ GET / 404 in 70ms (next.js: 43ms, application-code: 27ms)
+ GET /sw.js 404 in 25ms (next.js: 3ms, application-code: 22ms)
+ GET / 404 in 30ms (next.js: 4ms, application-code: 26ms)
+ GET /sw.js 404 in 24ms (next.js: 3ms, application-code: 21ms)
+ GET / 404 in 26ms (next.js: 3ms, application-code: 23ms)
+ GET /sw.js 404 in 25ms (next.js: 3ms, application-code: 22ms)
+ GET / 404 in 25ms (next.js: 3ms, application-code: 22ms)
+ GET /sw.js 404 in 26ms (next.js: 3ms, application-code: 22ms)
+[?25h

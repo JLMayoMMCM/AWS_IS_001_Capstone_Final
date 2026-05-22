@@ -1,0 +1,22 @@
+# AWS Amplify Hosting build specification.
+# The Next.js app lives in the cloudcampus/ subdirectory of this repo, so the
+# build is declared as a monorepo application with appRoot: cloudcampus.
+version: 1
+applications:
+  - appRoot: cloudcampus
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm ci
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - "**/*"
+      cache:
+        paths:
+          - node_modules/**/*
+          - .next/cache/**/*
