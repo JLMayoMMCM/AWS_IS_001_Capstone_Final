@@ -32,10 +32,7 @@ import {
   ConfirmDialog,
 } from "@/components/cloudcampus/confirm-dialog";
 import { EmptyState } from "@/components/cloudcampus/empty-state";
-import {
-  FileUpload,
-  type UploadedFile,
-} from "@/components/cloudcampus/file-upload";
+import { FileUpload, uploadFile } from "@/components/cloudcampus/file-upload";
 import { PageHeader } from "@/components/cloudcampus/page-header";
 import { ResourceIcon } from "@/components/cloudcampus/resource-icon";
 import type { ResourceItem } from "@/lib/types";
@@ -271,22 +268,25 @@ function ReplaceDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const router = useRouter();
-  const [file, setFile] = useState<UploadedFile | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   async function runReplace() {
     if (!file) return;
     setError(null);
+    setBusy(true);
     try {
+      const up = await uploadFile(file, "resource");
       const res = await fetch(`/api/admin/resources/${resource.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          key: file.key,
-          fileName: file.fileName,
-          mimeType: file.contentType,
-          size: file.size,
+          key: up.key,
+          fileName: up.fileName,
+          mimeType: up.contentType,
+          size: up.size,
         }),
       });
       if (!res.ok) {
@@ -294,13 +294,20 @@ function ReplaceDialog({
           error?: string;
         };
         setError(data.error ?? "Could not replace the file.");
+        setBusy(false);
         return;
       }
       setFile(null);
+      setBusy(false);
       onOpenChange(false);
       router.refresh();
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.",
+      );
+      setBusy(false);
     }
   }
 
@@ -322,11 +329,11 @@ function ReplaceDialog({
           )}
           <div className="space-y-1.5">
             <Label>File</Label>
-            <FileUpload purpose="resource" onUploaded={setFile} />
+            <FileUpload purpose="resource" onChange={setFile} />
           </div>
           {!file && (
             <p className="text-xs text-muted-foreground">
-              Upload a file to enable the replace action.
+              Choose a file to enable the replace action.
             </p>
           )}
           <DialogFooter>
@@ -334,15 +341,16 @@ function ReplaceDialog({
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
+              disabled={busy}
             >
               Cancel
             </Button>
             <Button
               type="button"
-              disabled={!file}
+              disabled={!file || busy}
               onClick={() => setConfirmOpen(true)}
             >
-              Replace file
+              {busy ? "Uploading…" : "Replace file"}
             </Button>
           </DialogFooter>
         </div>
@@ -367,7 +375,7 @@ function UploadDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const router = useRouter();
-  const [file, setFile] = useState<UploadedFile | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [isPublic, setIsPublic] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -379,7 +387,7 @@ function UploadDialog({
     event.preventDefault();
     setError(null);
     if (!file) {
-      setError("Choose and upload a file first.");
+      setError("Choose a file first.");
       return;
     }
     pendingForm.current = new FormData(event.currentTarget);
@@ -391,14 +399,15 @@ function UploadDialog({
     if (!form || !file) return;
     setBusy(true);
     try {
+      const up = await uploadFile(file, "resource");
       const res = await fetch("/api/admin/resources", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          key: file.key,
-          fileName: file.fileName,
-          mimeType: file.contentType,
-          size: file.size,
+          key: up.key,
+          fileName: up.fileName,
+          mimeType: up.contentType,
+          size: up.size,
           title: form.get("title"),
           description: form.get("description"),
           category: form.get("category"),
@@ -414,10 +423,15 @@ function UploadDialog({
         return;
       }
       setFile(null);
+      setBusy(false);
       onOpenChange(false);
       router.refresh();
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.",
+      );
       setBusy(false);
     }
   }
@@ -440,7 +454,7 @@ function UploadDialog({
           )}
           <div className="space-y-1.5">
             <Label>File</Label>
-            <FileUpload purpose="resource" onUploaded={setFile} />
+            <FileUpload purpose="resource" onChange={setFile} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="title">Title</Label>

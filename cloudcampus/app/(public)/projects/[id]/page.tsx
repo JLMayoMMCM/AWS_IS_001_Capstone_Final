@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Check, ChevronRight, ExternalLink, GitBranch, Lock } from "lucide-react";
+import { Check, ChevronRight, ExternalLink, GitBranch, Lock, Pencil, Rocket } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { AccessDenied } from "@/components/cloudcampus/access-denied";
+import { ApprovalPanel } from "@/components/cloudcampus/approval-panel";
 import { BackLink } from "@/components/cloudcampus/back-link";
 import { PlaceholderImage } from "@/components/cloudcampus/placeholder-image";
 import { UserAvatar } from "@/components/cloudcampus/user-avatar";
@@ -35,6 +36,13 @@ export default async function ProjectDetailPage({ params }: Params) {
   const publicView =
     project.status === "approved" && project.visibility === "public";
   if (session.role === "guest" && !publicView) return <AccessDenied />;
+
+  const isOwner =
+    !!session.memberId && session.memberId === project.submittedBy;
+  const isOfficer = session.role === "officer" || session.role === "admin";
+  if (project.status !== "approved" && !isOwner && !isOfficer) {
+    return <AccessDenied />;
+  }
 
   const contributors = project.contributors;
 
@@ -83,7 +91,24 @@ export default async function ProjectDetailPage({ params }: Params) {
             <p className="max-w-prose pt-1 text-muted-foreground">
               {project.summary}
             </p>
+            {(isOwner || session.role === "admin") &&
+              project.status !== "rejected" && (
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/projects/${project.id}/edit`}>
+                    <Pencil />
+                    Edit project
+                  </Link>
+                </Button>
+              )}
           </div>
+
+          {isOfficer && project.status === "pending" && (
+            <ApprovalPanel
+              entity="project"
+              id={project.id}
+              status={project.status}
+            />
+          )}
 
           <section className="space-y-2">
             <h2 className="text-xl font-semibold">About this project</h2>
@@ -197,6 +222,17 @@ export default async function ProjectDetailPage({ params }: Params) {
                 >
                   <a href={project.liveUrl} target="_blank" rel="noreferrer">
                     <ExternalLink /> Live demo
+                  </a>
+                </Button>
+              )}
+              {project.publishedUrl && (
+                <Button asChild variant="outline" className="w-full">
+                  <a
+                    href={project.publishedUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <Rocket /> Published
                   </a>
                 </Button>
               )}

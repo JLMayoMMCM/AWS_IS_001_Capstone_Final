@@ -51,6 +51,7 @@ export async function PATCH(request: Request) {
   // A member can only edit their own row — the id comes from the session.
   await updateMemberProfile(session.memberId, {
     name,
+    courseId: optionalText(data.courseId),
     course: optionalText(data.course),
     year,
     bio: optionalText(data.bio),

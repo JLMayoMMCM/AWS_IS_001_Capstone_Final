@@ -65,6 +65,7 @@ export async function POST(request: Request) {
       ip:
         request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
     });
+
     return NextResponse.json({ ok: true, id });
   } catch {
     return NextResponse.json(

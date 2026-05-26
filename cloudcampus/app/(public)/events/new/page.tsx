@@ -32,7 +32,7 @@ export default async function NewEventPage() {
       <BackLink href="/events" label="Events" />
       <PageHeader
         title="Create an event"
-        subtitle="Your event is sent to the three approver positions for review."
+        subtitle="Your event is sent to every approver position for review — all must approve, and any single rejection rejects it."
       />
       <EventForm />
     </div>

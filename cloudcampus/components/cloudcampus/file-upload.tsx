@@ -1,11 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Check, Upload } from "lucide-react";
+import { Upload, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
-/** Metadata returned once a file has been uploaded to S3. */
+/** Result of an actually-completed upload to S3. */
 export interface UploadedFile {
   key: string;
   fileName: string;
@@ -13,86 +13,31 @@ export interface UploadedFile {
   size: number;
 }
 
+type Purpose = "resource" | "photo" | "cover" | "attachment";
+
 /**
- * Picks a file, requests a pre-signed URL from /api/uploads, uploads the file
- * directly to S3, and reports the resulting object key to the parent form.
+ * Picks a file and holds it client-side. The parent form is responsible for
+ * uploading via {@link uploadFile} when its save action runs, so an abandoned
+ * form never leaves an orphan in S3.
  */
 export function FileUpload({
-  purpose,
+  purpose: _purpose,
   accept,
   disabled,
-  onUploaded,
+  onChange,
 }: {
-  purpose: "resource" | "photo" | "cover" | "attachment";
+  purpose: Purpose;
   accept?: string;
   disabled?: boolean;
-  onUploaded: (file: UploadedFile) => void;
+  onChange: (file: File | null) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  // Key of the file this picker last uploaded. If the user picks again before
-  // the form is saved, that earlier object is orphaned and gets cleaned up.
-  const lastKeyRef = useRef<string | null>(null);
-  const [status, setStatus] = useState<"idle" | "uploading" | "done">("idle");
   const [fileName, setFileName] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  async function handleFile(file: File) {
-    setError(null);
-    setStatus("uploading");
-    setFileName(file.name);
-    try {
-      const presign = await fetch("/api/uploads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          purpose,
-          fileName: file.name,
-          contentType: file.type || "application/octet-stream",
-        }),
-      });
-      if (!presign.ok) {
-        const data = (await presign.json().catch(() => ({}))) as {
-          error?: string;
-        };
-        throw new Error(data.error ?? "Could not start the upload.");
-      }
-      const { uploadUrl, key } = (await presign.json()) as {
-        uploadUrl: string;
-        key: string;
-      };
-
-      const put = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": file.type || "application/octet-stream",
-        },
-        body: file,
-      });
-      if (!put.ok) throw new Error("The file could not be uploaded to S3.");
-
-      // The new upload succeeded — discard the previous one it superseded so
-      // abandoned files do not pile up in the bucket (fire-and-forget).
-      const supersededKey = lastKeyRef.current;
-      lastKeyRef.current = key;
-      if (supersededKey && supersededKey !== key) {
-        void fetch("/api/uploads", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ purpose, key: supersededKey }),
-        });
-      }
-
-      setStatus("done");
-      onUploaded({
-        key,
-        fileName: file.name,
-        contentType: file.type || "application/octet-stream",
-        size: file.size,
-      });
-    } catch (err) {
-      setStatus("idle");
-      setError(err instanceof Error ? err.message : "Upload failed.");
-    }
+  function pickFile(file: File | null) {
+    setFileName(file?.name ?? null);
+    onChange(file);
+    if (!file && inputRef.current) inputRef.current.value = "";
   }
 
   return (
@@ -102,29 +47,68 @@ export function FileUpload({
         type="file"
         accept={accept}
         className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) void handleFile(file);
-        }}
+        onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
       />
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        disabled={disabled || status === "uploading"}
-        onClick={() => inputRef.current?.click()}
-      >
-        {status === "done" ? <Check /> : <Upload />}
-        {status === "uploading"
-          ? "Uploading…"
-          : status === "done"
-            ? "Replace file"
-            : "Choose file"}
-      </Button>
-      {fileName && status !== "idle" && (
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={disabled}
+          onClick={() => inputRef.current?.click()}
+        >
+          <Upload />
+          {fileName ? "Replace file" : "Choose file"}
+        </Button>
+        {fileName && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={disabled}
+            onClick={() => pickFile(null)}
+          >
+            <X />
+            Remove
+          </Button>
+        )}
+      </div>
+      {fileName && (
         <p className="truncate text-xs text-muted-foreground">{fileName}</p>
       )}
-      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
+}
+
+/**
+ * Mints a pre-signed PUT URL from /api/uploads and uploads `file` directly to
+ * S3. Returns the resulting object key + metadata for the form payload.
+ * Callers should invoke this from their save handler, only when the form
+ * is actually being submitted.
+ */
+export async function uploadFile(
+  file: File,
+  purpose: Purpose,
+): Promise<UploadedFile> {
+  const contentType = file.type || "application/octet-stream";
+  const presign = await fetch("/api/uploads", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ purpose, fileName: file.name, contentType }),
+  });
+  if (!presign.ok) {
+    const data = (await presign.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error ?? "Could not start the upload.");
+  }
+  const { uploadUrl, key } = (await presign.json()) as {
+    uploadUrl: string;
+    key: string;
+  };
+  const put = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": contentType },
+    body: file,
+  });
+  if (!put.ok) throw new Error("The file could not be uploaded to S3.");
+  return { key, fileName: file.name, contentType, size: file.size };
 }

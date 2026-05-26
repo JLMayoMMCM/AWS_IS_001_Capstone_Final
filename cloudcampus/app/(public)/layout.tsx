@@ -1,10 +1,11 @@
+import { AnnouncementBanner } from "@/components/cloudcampus/announcement-banner";
 import { SiteHeader } from "@/components/cloudcampus/site-header";
 import { SiteFooter } from "@/components/cloudcampus/site-footer";
 
 /**
- * Shell for all public, member, and officer pages: sticky top nav, a centred
- * content column, and the footer. Admin pages use a separate route group with
- * their own sidebar shell (added in a later phase).
+ * Shell for all public, member, and officer pages: sticky top nav, a wide
+ * content area, and the footer. Admin pages use a separate route group with
+ * their own sidebar shell.
  */
 export default function PublicLayout({
   children,
@@ -17,9 +18,10 @@ export default function PublicLayout({
         Skip to content
       </a>
       <SiteHeader />
+      <AnnouncementBanner />
       <main
         id="main"
-        className="mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-12 md:px-6 md:pt-10 lg:px-8"
+        className="mx-auto w-full max-w-7xl flex-1 px-4 pt-6 pb-12 md:px-6 md:pt-10 lg:px-10 motion-safe:animate-in motion-safe:fade-in-50 motion-safe:duration-200"
       >
         {children}
       </main>

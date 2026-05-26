@@ -46,8 +46,7 @@ cloudcampus/
   lib/               db, queries, auth, jwt, s3, types, org, lookups
   db/
     migrations/      ordered SQL migrations (0001 — consolidated schema)
-    seed.sql         placeholder data + bootstrap admin
-  scripts/           db-migrate / db-seed / db-check
+  scripts/           db-migrate / db-check / IAM diagnostics / SMTP check
   proxy.ts           optimistic auth gate (Next.js "Proxy")
 ```
 
@@ -59,14 +58,14 @@ Prerequisites: Node.js 20+, Docker (for local PostgreSQL + MinIO).
 cp .env.example .env       # then adjust values as needed
 docker compose up -d       # local PostgreSQL + MinIO
 npm install
-npm run db:migrate         # apply the schema migration
-npm run db:seed            # placeholder data + bootstrap admin
+npm run db:migrate         # apply the schema migrations
 npm run dev                # http://localhost:3000
 ```
 
-The seeded bootstrap admin is `admin@cloudcampus.example` (password from
-`SEED_ADMIN_PASSWORD`, default `CloudCampus!2026`) — change it after first
-sign-in.
+Create the first admin with `node scripts/_create-admin.mjs <email> <password>`
+(the script ensures both the `users` and `members` rows). The migrations seed
+the lookup tables (courses, year levels, etc.) and the `site_settings` row;
+they do not create any admin or placeholder member.
 
 ## Scripts
 
@@ -77,9 +76,11 @@ sign-in.
 | `npm run start` | Serve the production build |
 | `npm run lint` | ESLint |
 | `npm run db:migrate` | Apply pending SQL migrations |
-| `npm run db:seed` | Insert placeholder data + bootstrap admin |
-| `npm run db:reset` | `db:migrate` then `db:seed` |
 | `npm run db:check` | Read-only check that the schema matches the code |
+| `npm run db:iam-check` | Verify the RDS IAM-auth path end-to-end |
+| `npm run s3:iam-check` | Verify the S3 IAM-credentialed path end-to-end |
+| `npm run s3:upload-check` | Verify the direct-to-S3 upload + presigned-URL flow |
+| `npm run smtp:check` | Verify the SMTP credentials and send a self-ping |
 
 > Don't run `npm run build` against a folder a `npm run dev` session is using
 > — they share `.next/` and mixing the artifacts causes chunk-load errors.
@@ -96,20 +97,27 @@ sign-in.
 | `JWT_SECRET` | Long random string signing session cookies |
 | `S3_BUCKET`, `S3_REGION` | Target S3 bucket and region |
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Local-only S3 credentials (MinIO / developer IAM user). Omit in Amplify — the attached IAM role provides credentials. |
-| `SEED_ADMIN_PASSWORD` | Bootstrap admin password used by `db:seed` |
+| `smtp_email`, `smtp_pass` | Gmail SMTP user + App Password for outbound mail (password reset, registration decisions, email-change confirmations). Falls back to stdout when unset. |
 
 Secrets live only in `.env` (gitignored). See `db/README.md` for database
 detail and [`../DEPLOYMENT.md`](../DEPLOYMENT.md) for the AWS deployment.
 
 ## Database
 
-Schema lives in `db/migrations/` as ordered, immutable files. It is currently
-one consolidated migration:
+Schema lives in `db/migrations/` as ordered, immutable files:
 
-- `0001_initial_schema.sql` — every table (base tables, the lookup tables, and
-  `site_settings`), type, index, trigger, and required reference data.
+- `0001_initial_schema.sql` — V1 baseline: every table (base tables, lookup
+  tables, `site_settings`), type, index, trigger, and seeded reference data.
+- `0002_v2_school_year_and_features.sql` — V2: school years, registration
+  queue, password-reset tokens, announcements (with dismissals).
+- `0003_v2_1_editing_and_approval.sql` — V2.1: multi-incumbent officer
+  positions, 2/3-majority event approval with `revision_requested`,
+  edit→re-approval flow, unique student-id index, date-only announcement
+  columns, `site_settings.term` dropped, `projects.published_url` added.
+- `0004_email_change_and_smtp.sql` — V2.1 §4: `email_change_requests` table
+  for the email-change-with-verification flow.
 
-Future schema changes add `0002_*.sql`, … `db-migrate.mjs` records applied
+Future schema changes add `0005_*.sql`, … `db-migrate.mjs` records applied
 files in `schema_migrations`, so re-runs are safe. `npm run db:check` verifies
 the live schema still matches the code.
 
@@ -119,3 +127,8 @@ the live schema still matches the code.
 - [`../DEPLOYMENT.md`](../DEPLOYMENT.md) — AWS deployment & hardening.
 - [`../Docs/Implementation_Notes.md`](../Docs/Implementation_Notes.md) — how the
   build extends the SRS / Feasibility / Wireframe specs.
+- [`../Docs/V2_Implementation_Plan.md`](../Docs/V2_Implementation_Plan.md) and
+  [`../Docs/V2.1_Implementation_Plan.md`](../Docs/V2.1_Implementation_Plan.md) —
+  feature-by-feature plans driving the V2 / V2.1 sprints.
+- [`../Docs/Implementation_Status.md`](../Docs/Implementation_Status.md) — which
+  V2 / V2.1 items are landed vs deferred.

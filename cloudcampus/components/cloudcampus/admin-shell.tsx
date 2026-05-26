@@ -6,10 +6,12 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Activity,
   ArrowLeft,
+  BellRing,
   Briefcase,
   CalendarDays,
   ClipboardList,
   Files,
+  GraduationCap,
   KeyRound,
   LayoutDashboard,
   Menu,
@@ -17,6 +19,7 @@ import {
   Pencil,
   ShieldCheck,
   Tags,
+  UserPlus,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -42,8 +45,11 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/content", label: "Content", icon: Pencil },
+  { href: "/admin/announcements", label: "Announcements", icon: BellRing },
+  { href: "/admin/school-years", label: "School years", icon: GraduationCap },
   { href: "/admin/officers", label: "Officers", icon: ShieldCheck },
   { href: "/admin/members", label: "Members", icon: Users },
+  { href: "/admin/registrations", label: "Registrations", icon: UserPlus },
   { href: "/admin/blogs/approval", label: "Blogs", icon: Newspaper },
   { href: "/admin/projects", label: "Projects", icon: Briefcase },
   { href: "/admin/events", label: "Events", icon: CalendarDays },
@@ -89,8 +95,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   async function signOut() {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.refresh();
-    router.push("/");
+    // Full reload drops cached server-component state for the previous role.
+    window.location.assign("/");
   }
 
   return (
@@ -160,7 +166,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </header>
 
         <main className="flex-1 px-4 py-6 md:px-6 md:py-10">
-          <div className="mx-auto max-w-5xl">{children}</div>
+          <div className="mx-auto w-full max-w-[1600px]">{children}</div>
         </main>
       </div>
     </div>

@@ -50,10 +50,12 @@ Beyond the SRS §3.5 logical model it:
   organization profile (§2 above).
 
 Required reference data (year levels, member statuses, form providers,
-project categories, the organization profile) is seeded inside the migration;
-demo/placeholder data stays in `seed.sql`. Migrations are ordered and
-immutable (NFR-MNT-02); `npm run db:check` verifies the live schema against
-the application code.
+project categories, the organization profile) is seeded inline by the
+migrations themselves. The placeholder `seed.sql` was removed during the
+V2.1 cleanup pass — the first admin is created with
+`node scripts/_create-admin.mjs <email> <password>`. Migrations are ordered
+and immutable (NFR-MNT-02); `npm run db:check` verifies the live schema
+against the application code.
 
 ## 4. Conventions adopted
 

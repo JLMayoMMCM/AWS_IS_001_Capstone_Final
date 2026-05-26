@@ -49,8 +49,11 @@ export default async function LoginPage() {
         </div>
         <LoginForm />
         <p className="mt-6 text-center text-xs leading-relaxed text-muted-foreground">
-          {org.name} accounts are created by administrators — there is no
-          self-service sign-up.
+          Don&apos;t have an account?{" "}
+          <a href="/register" className="text-foreground hover:underline">
+            Apply for membership
+          </a>
+          . Approval is reviewed by an administrator.
         </p>
       </div>
     </div>

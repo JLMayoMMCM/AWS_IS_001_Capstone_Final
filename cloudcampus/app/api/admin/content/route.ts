@@ -58,7 +58,6 @@ export async function PATCH(request: Request) {
       name,
       shortName: str(data.shortName) || name,
       tagline,
-      term: str(data.term),
       about,
       contact: {
         email: str(data.contactEmail),

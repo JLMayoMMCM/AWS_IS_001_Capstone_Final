@@ -4,18 +4,28 @@ import { PageHeader } from "@/components/cloudcampus/page-header";
 import { adminListBlogs } from "@/lib/queries";
 import { BlogApprovalList } from "./blog-approval-list";
 
-export const metadata: Metadata = { title: "Blog approvals" };
+export const metadata: Metadata = { title: "Blogs" };
 
 export default async function AdminBlogApprovalPage() {
-  const blogs = await adminListBlogs("pending");
+  const [pending, approved, rejected, archived] = await Promise.all([
+    adminListBlogs("pending"),
+    adminListBlogs("approved"),
+    adminListBlogs("rejected"),
+    adminListBlogs("archived"),
+  ]);
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Blog approvals"
-        subtitle="Posts submitted by members, awaiting review."
+        title="Blogs"
+        subtitle="Review submitted posts and manage their lifecycle."
       />
-      <BlogApprovalList blogs={blogs} />
+      <BlogApprovalList
+        pending={pending}
+        approved={approved}
+        rejected={rejected}
+        archived={archived}
+      />
     </div>
   );
 }

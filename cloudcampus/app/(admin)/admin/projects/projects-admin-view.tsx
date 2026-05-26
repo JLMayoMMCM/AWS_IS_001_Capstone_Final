@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Archive, Check, Eye, Inbox, TriangleAlert, X } from "lucide-react";
+import { Archive, Check, Eye, Inbox, TriangleAlert, Upload, X } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -157,14 +157,21 @@ export function ProjectsAdminView({
 
   return (
     <div className="space-y-4">
-      <Tabs value={tab} onValueChange={(v) => setTab(v as Status)}>
-        <TabsList>
-          <TabsTrigger value="pending">Pending ({pending.length})</TabsTrigger>
-          <TabsTrigger value="approved">Approved</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected</TabsTrigger>
-          <TabsTrigger value="archived">Archived</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Tabs value={tab} onValueChange={(v) => setTab(v as Status)}>
+          <TabsList>
+            <TabsTrigger value="pending">Pending ({pending.length})</TabsTrigger>
+            <TabsTrigger value="approved">Approved</TabsTrigger>
+            <TabsTrigger value="rejected">Rejected</TabsTrigger>
+            <TabsTrigger value="archived">Archived</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <Button asChild>
+          <Link href="/projects/new">
+            <Upload /> Upload project
+          </Link>
+        </Button>
+      </div>
 
       {items.length === 0 ? (
         <EmptyState icon={Inbox} title={`No ${tab} projects`} />

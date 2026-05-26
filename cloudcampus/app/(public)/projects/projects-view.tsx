@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Upload } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +16,13 @@ import { SearchInput } from "@/components/cloudcampus/search-input";
 import { useSession } from "@/components/cloudcampus/session-provider";
 import type { Project } from "@/lib/types";
 
-export function ProjectsView({ projects }: { projects: Project[] }) {
+export function ProjectsView({
+  projects,
+  canUpload = false,
+}: {
+  projects: Project[];
+  canUpload?: boolean;
+}) {
   const { role } = useSession();
   const isGuest = role === "guest";
 
@@ -42,7 +48,16 @@ export function ProjectsView({ projects }: { projects: Project[] }) {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Projects" subtitle="Built by members of CloudCampus" />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <PageHeader title="Projects" subtitle="Built by members of CloudCampus" />
+        {canUpload && (
+          <Button asChild>
+            <Link href="/projects/new">
+              <Upload /> Upload project
+            </Link>
+          </Button>
+        )}
+      </div>
 
       <div className="flex flex-col gap-2 md:flex-row">
         <SearchInput

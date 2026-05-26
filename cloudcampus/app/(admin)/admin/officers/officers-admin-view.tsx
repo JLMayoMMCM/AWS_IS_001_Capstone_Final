@@ -35,13 +35,14 @@ import {
 } from "@/components/cloudcampus/confirm-dialog";
 import { EmptyState } from "@/components/cloudcampus/empty-state";
 import { UserAvatar } from "@/components/cloudcampus/user-avatar";
-import type { Member, OfficerSummary } from "@/lib/types";
+import type { Member, OfficerSummary, SchoolYear } from "@/lib/types";
 
 interface Position {
   id: string;
   name: string;
   order: number;
   isApprover: boolean;
+  maxIncumbents: number;
 }
 
 /** Dialog for assigning a member to an officer position (FR-ADM-04). */
@@ -50,13 +51,17 @@ function AssignOfficerDialog({
   onOpenChange,
   positions,
   members,
-  term,
+  schoolYears,
+  currentSchoolYearId,
+  officers,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   positions: Position[];
   members: Member[];
-  term: string;
+  schoolYears: SchoolYear[];
+  currentSchoolYearId: string;
+  officers: OfficerSummary[];
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -83,7 +88,7 @@ function AssignOfficerDialog({
         body: JSON.stringify({
           memberId: form.get("memberId"),
           positionId: form.get("positionId"),
-          termLabel: form.get("termLabel"),
+          schoolYearId: form.get("schoolYearId"),
         }),
       });
       if (!res.ok) {
@@ -149,21 +154,51 @@ function AssignOfficerDialog({
               <NativeSelectOption value="" disabled>
                 Select a position
               </NativeSelectOption>
-              {positions.map((position) => (
-                <NativeSelectOption key={position.id} value={position.id}>
-                  {position.name}
+              {positions.map((position) => {
+                const filledCount = officers.filter(
+                  (o) =>
+                    o.position === position.name &&
+                    o.schoolYearId === currentSchoolYearId,
+                ).length;
+                const atCap = filledCount >= position.maxIncumbents;
+                return (
+                  <NativeSelectOption
+                    key={position.id}
+                    value={position.id}
+                    disabled={atCap}
+                  >
+                    {position.name}
+                    {` (${filledCount}/${position.maxIncumbents}${
+                      atCap ? " — full" : ""
+                    })`}
+                  </NativeSelectOption>
+                );
+              })}
+            </NativeSelect>
+            <p className="text-xs text-muted-foreground">
+              Each position has a capacity set in Admin → Positions. Positions
+              at capacity for the current school year are disabled.
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="officer-school-year">School year</Label>
+            <NativeSelect
+              id="officer-school-year"
+              name="schoolYearId"
+              required
+              defaultValue={currentSchoolYearId}
+              className="w-full"
+            >
+              <NativeSelectOption value="" disabled>
+                Select a school year
+              </NativeSelectOption>
+              {schoolYears.map((sy) => (
+                <NativeSelectOption key={sy.id} value={sy.id}>
+                  {sy.label}
+                  {sy.isCurrent ? " (current)" : ""}
                 </NativeSelectOption>
               ))}
             </NativeSelect>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="officer-term">School year</Label>
-            <Input
-              id="officer-term"
-              name="termLabel"
-              required
-              defaultValue={term}
-            />
           </div>
           <DialogFooter>
             <Button
@@ -341,12 +376,14 @@ export function OfficersAdminView({
   positions,
   officers,
   members,
-  term,
+  schoolYears,
+  currentSchoolYearId,
 }: {
   positions: Position[];
   officers: OfficerSummary[];
   members: Member[];
-  term: string;
+  schoolYears: SchoolYear[];
+  currentSchoolYearId: string;
 }) {
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -518,7 +555,9 @@ export function OfficersAdminView({
         onOpenChange={setAssignOpen}
         positions={positions}
         members={members}
-        term={term}
+        schoolYears={schoolYears}
+        currentSchoolYearId={currentSchoolYearId}
+        officers={officers}
       />
     </div>
   );

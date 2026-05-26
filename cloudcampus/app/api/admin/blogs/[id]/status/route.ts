@@ -5,13 +5,20 @@ import { setBlogStatus, writeAudit } from "@/lib/queries";
 
 type Params = { params: Promise<{ id: string }> };
 
-/** POST /api/admin/blogs/[id]/status — approve or reject a blog (FR-ADM-06). */
+const ACTION: Record<string, string> = {
+  approved: "APPROVE_BLOG",
+  rejected: "REJECT_BLOG",
+  archived: "ARCHIVE_BLOG",
+};
+
+/** POST /api/admin/blogs/[id]/status — approve/reject/archive (FR-ADM-06). */
 export async function POST(request: Request, { params }: Params) {
   const { id } = await params;
 
+  // V2.1: officers + admins approve blogs from the queue OR inline.
   let session;
   try {
-    session = await requireRole("admin");
+    session = await requireRole("officer");
   } catch (err) {
     return authErrorResponse(err);
   }
@@ -30,9 +37,9 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   const status = (body as { status?: unknown }).status;
-  if (status !== "approved" && status !== "rejected") {
+  if (status !== "approved" && status !== "rejected" && status !== "archived") {
     return NextResponse.json(
-      { error: "status must be 'approved' or 'rejected'." },
+      { error: "status must be 'approved', 'rejected', or 'archived'." },
       { status: 400 },
     );
   }
@@ -44,7 +51,7 @@ export async function POST(request: Request, { params }: Params) {
 
   await writeAudit({
     actorUserId: session.userId,
-    action: status === "approved" ? "APPROVE_BLOG" : "REJECT_BLOG",
+    action: ACTION[status],
     entity: "blogs",
     entityId: id,
     after: { title, status },

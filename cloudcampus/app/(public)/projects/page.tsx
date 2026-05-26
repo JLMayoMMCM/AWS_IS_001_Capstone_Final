@@ -12,5 +12,10 @@ export const metadata: Metadata = {
 export default async function ProjectsPage() {
   const session = await getSession();
   const projects = await listProjects(session.role !== "guest");
-  return <ProjectsView projects={projects} />;
+  return (
+    <ProjectsView
+      projects={projects}
+      canUpload={session.role !== "guest"}
+    />
+  );
 }

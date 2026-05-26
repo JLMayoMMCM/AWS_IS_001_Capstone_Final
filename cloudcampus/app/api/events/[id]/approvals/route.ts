@@ -46,21 +46,29 @@ export async function POST(request: Request, { params }: Params) {
 
   const data = body as Record<string, unknown>;
   const decision =
-    data.decision === "approved" || data.decision === "rejected"
+    data.decision === "approved" ||
+    data.decision === "rejected" ||
+    data.decision === "revision_requested"
       ? data.decision
       : null;
   if (!decision) {
     return NextResponse.json(
-      { error: "A decision of 'approved' or 'rejected' is required." },
+      {
+        error:
+          "A decision of 'approved', 'rejected', or 'revision_requested' is required.",
+      },
       { status: 400 },
     );
   }
 
   const comment =
     typeof data.comment === "string" ? data.comment.trim() : "";
-  if (decision === "rejected" && !comment) {
+  if (
+    (decision === "rejected" || decision === "revision_requested") &&
+    !comment
+  ) {
     return NextResponse.json(
-      { error: "A rejection requires a comment." },
+      { error: `A ${decision} decision requires a comment.` },
       { status: 400 },
     );
   }
@@ -73,6 +81,7 @@ export async function POST(request: Request, { params }: Params) {
       decision,
       comment: comment || null,
     });
+
     return NextResponse.json({ ok: true });
   } catch (err) {
     // Database triggers reject self-votes, duplicate votes, etc.

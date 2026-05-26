@@ -92,10 +92,16 @@ function client(): S3Client {
     // attached to Amplify compute in production. Locally, set S3_ACCESS_KEY_ID
     // / S3_SECRET_ACCESS_KEY (e.g. for MinIO) or AWS_ACCESS_KEY_ID /
     // AWS_SECRET_ACCESS_KEY and they'll be picked up here.
+    //
+    // S3_ENDPOINT lets local dev point at MinIO (http://localhost:9000) or any
+    // S3-compatible store. When set, force path-style addressing because MinIO
+    // and most non-AWS endpoints don't serve virtual-hosted-style bucket DNS.
     const accessKeyId = process.env.S3_ACCESS_KEY_ID;
     const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
+    const endpoint = process.env.S3_ENDPOINT;
     cachedClient = new S3Client({
       region: process.env.S3_REGION,
+      ...(endpoint ? { endpoint, forcePathStyle: true } : {}),
       ...(accessKeyId && secretAccessKey
         ? { credentials: { accessKeyId, secretAccessKey } }
         : {}),

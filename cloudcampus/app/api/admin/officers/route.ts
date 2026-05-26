@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 
 import { authErrorResponse, requireRole } from "@/lib/auth";
-import { assignOfficer, writeAudit } from "@/lib/queries";
+import {
+  assignOfficer,
+  SingletonConflictError,
+  writeAudit,
+} from "@/lib/queries";
 
 /**
  * POST /api/admin/officers — assigns a member to an officer position for a
- * school year (FR-ADM-04). Replaces the position's current holder, if any.
+ * school year (FR-ADM-04). Singleton positions (President, VP, Secretary)
+ * must be vacant for the school year — end the existing term first.
  */
 export async function POST(request: Request) {
   let session;
@@ -32,21 +37,25 @@ export async function POST(request: Request) {
   const memberId = typeof data.memberId === "string" ? data.memberId : "";
   const positionId =
     typeof data.positionId === "string" ? data.positionId : "";
-  const termLabel =
-    typeof data.termLabel === "string" ? data.termLabel.trim() : "";
+  const schoolYearId =
+    typeof data.schoolYearId === "string" ? data.schoolYearId : "";
 
-  if (!memberId || !positionId || !termLabel) {
+  if (!memberId || !positionId || !schoolYearId) {
     return NextResponse.json(
-      { error: "A member, position and school year are required." },
+      { error: "A member, position, and school year are required." },
       { status: 400 },
     );
   }
 
   try {
-    const result = await assignOfficer({ memberId, positionId, termLabel });
+    const result = await assignOfficer({
+      memberId,
+      positionId,
+      schoolYearId,
+    });
     if (!result) {
       return NextResponse.json(
-        { error: "That member or position no longer exists." },
+        { error: "That member, position, or school year no longer exists." },
         { status: 404 },
       );
     }
@@ -59,14 +68,24 @@ export async function POST(request: Request) {
       after: {
         member: result.memberName,
         position: result.positionName,
-        term: termLabel,
+        schoolYearId,
       },
       ip:
         request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
     });
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (err) {
+    if (err instanceof SingletonConflictError) {
+      return NextResponse.json(
+        {
+          error: `${err.positionName} is a singleton position and already has a current officer (${err.currentHolder}) for this school year. End their term first.`,
+          currentHolder: err.currentHolder,
+        },
+        { status: 409 },
+      );
+    }
+    console.error("[assign-officer]", err);
     return NextResponse.json(
       { error: "Could not assign the officer." },
       { status: 500 },

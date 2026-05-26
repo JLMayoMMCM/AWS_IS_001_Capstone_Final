@@ -8,7 +8,12 @@ export type Visibility = "public" | "private";
 /** A member_statuses lookup value (e.g. "Active") — managed in admin. */
 export type MemberStatus = string;
 export type Role = "guest" | "member" | "officer" | "admin";
-export type BlogStatus = "draft" | "pending" | "approved" | "rejected";
+export type BlogStatus =
+  | "draft"
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "archived";
 export type ProjectStatus =
   | "draft"
   | "pending"
@@ -30,10 +35,15 @@ export interface Member {
   name: string;
   studentId: string | null;
   course: string | null;
+  /** courses.id, when the member is assigned to a known course. */
+  courseId: string | null;
   /** Year level 1–4; 5 marks an alumnus. */
   year: number | null;
   status: MemberStatus;
+  /** members.contact_email — the publicly-shown contact address. */
   email: string | null;
+  /** users.email — the sign-in address. Used by the email-change flow. */
+  accountEmail: string;
   bio: string | null;
   /** users.role — 'member' or 'admin'. */
   role: Role;
@@ -44,6 +54,7 @@ export interface Position {
   name: string;
   order: number;
   isApprover: boolean;
+  maxIncumbents: number;
   description: string | null;
 }
 
@@ -54,7 +65,9 @@ export interface OfficerSummary {
   memberId: string;
   name: string;
   position: string;
+  /** The school year label, e.g. "2026-2027". */
   term: string;
+  schoolYearId: string;
   isApprover: boolean;
   order: number;
 }
@@ -71,10 +84,14 @@ export interface OrgEvent {
   coverAlt: string;
   /** Cover image URL, or null when none was uploaded. */
   coverUrl: string | null;
+  /** Raw S3 key for the cover (needed by the edit form). */
+  coverKey: string | null;
   /** Short summary for cards. */
   summary: string;
   /** Long-form body split into paragraphs. */
   body: string[];
+  /** Raw markdown source used by the edit form. */
+  bodyMarkdown: string;
   locationNote: string;
   locationUrl: string | null;
   visibility: Visibility;
@@ -99,7 +116,11 @@ export interface BlogPost {
   coverAlt: string;
   /** Cover image URL, or null when none was uploaded. */
   coverUrl: string | null;
+  /** Raw S3 key for the cover (needed by the edit form). */
+  coverKey: string | null;
   body: string[];
+  /** Raw markdown source used by the edit form. */
+  bodyMarkdown: string;
   attachments: Attachment[];
 }
 
@@ -116,6 +137,8 @@ export interface Attachment {
   kind: "image" | "link";
   /** Set when kind === "image" — a ready-to-use media URL. */
   imageUrl: string | null;
+  /** Set when kind === "image" — the raw S3 key (needed by the edit form). */
+  key: string | null;
   /** Set when kind === "link" — the external URL. */
   url: string | null;
   label: string;
@@ -126,17 +149,27 @@ export interface Project {
   title: string;
   summary: string;
   body: string[];
+  /** Raw markdown source used by the edit form. */
+  bodyMarkdown: string;
   status: ProjectStatus;
   visibility: Visibility;
   stack: string[];
+  /** Comma-joined tags string (matches the form input). */
+  tags: string[];
+  categoryId: string | null;
   contributors: ProjectContributor[];
+  submittedBy: string;
   repoUrl: string | null;
   liveUrl: string | null;
+  /** Optional published link, V2.1 §0.7. */
+  publishedUrl: string | null;
   startedOn: string;
   completedOn: string;
   coverAlt: string;
   /** Cover image URL, or null when none was uploaded. */
   coverUrl: string | null;
+  /** Raw S3 key for the cover (needed by the edit form). */
+  coverKey: string | null;
   /** project_categories name, or null when uncategorized. */
   category: string | null;
   attachments: Attachment[];
@@ -170,3 +203,51 @@ export interface FormLink {
   url: string;
   visibility: Visibility;
 }
+
+// ---------------------------------------------------------------------------
+// V2: school years, registration, announcements, push notifications.
+// ---------------------------------------------------------------------------
+
+export interface SchoolYear {
+  id: string;
+  /** "2026-2027" — derived from start/end years on the row. */
+  label: string;
+  startYear: number;
+  endYear: number;
+  startsOn: string;
+  endsOn: string;
+  isCurrent: boolean;
+}
+
+export type RegistrationStatus = "pending" | "approved" | "rejected";
+
+export interface RegistrationRequest {
+  id: string;
+  email: string;
+  fullName: string;
+  studentId: string | null;
+  course: string | null;
+  year: number | null;
+  schoolYearLabel: string;
+  status: RegistrationStatus;
+  rejectionNote: string | null;
+  createdAt: string;
+  reviewedAt: string | null;
+}
+
+export type AnnouncementLevel = "normal" | "elevated" | "critical";
+export type AnnouncementAudience = "public" | "members" | "officers";
+
+export interface Announcement {
+  id: string;
+  title: string;
+  bodyMarkdown: string;
+  level: AnnouncementLevel;
+  audience: AnnouncementAudience;
+  publishedAt: string;
+  expiresAt: string | null;
+  pinnedUntil: string | null;
+  authorId: string;
+  authorName: string;
+}
+

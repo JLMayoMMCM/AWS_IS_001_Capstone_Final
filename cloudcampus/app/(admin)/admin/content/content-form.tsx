@@ -43,7 +43,6 @@ export function ContentForm({ org }: { org: OrgInfo }) {
           name: form.get("name"),
           shortName: form.get("shortName"),
           tagline: form.get("tagline"),
-          term: form.get("term"),
           about: form.get("about"),
           contactEmail: form.get("contactEmail"),
           contactAddress: form.get("contactAddress"),
@@ -128,8 +127,17 @@ export function ContentForm({ org }: { org: OrgInfo }) {
             </p>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="term">Academic term</Label>
-            <Input id="term" name="term" defaultValue={org.term} />
+            <Label>School year</Label>
+            <p className="rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
+              {org.term || "No current school year set."}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Managed under{" "}
+              <a className="underline" href="/admin/school-years">
+                Admin → School years
+              </a>
+              .
+            </p>
           </div>
         </section>
 

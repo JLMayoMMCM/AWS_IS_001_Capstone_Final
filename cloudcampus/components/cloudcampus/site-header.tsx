@@ -68,8 +68,9 @@ export function SiteHeader() {
 
   async function signOut() {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.refresh();
-    router.push("/");
+    // Full reload guarantees server-rendered pages drop the previous role's
+    // cached payload — router.refresh() alone keeps stale state on some routes.
+    window.location.assign("/");
   }
 
   return (

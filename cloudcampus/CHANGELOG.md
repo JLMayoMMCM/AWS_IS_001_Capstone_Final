@@ -3,6 +3,72 @@
 Notable changes to CloudCampus. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/).
 
+## [V2] — Unreleased
+
+### Added
+
+- **Public registration** — `/register` lets prospective members file an
+  application; the admin reviews them at `/admin/registrations` (approve creates
+  the user + member rows; reject records a note and emails the applicant).
+- **School-year system** — `school_years` table is the spine for officers,
+  members, and historical rosters. New `/admin/school-years` page creates years
+  and rolls over the current one; `member_school_years` snapshots the live
+  roster on rollover so officer and member history is recoverable.
+- **Forgot password** — `/forgot-password` emails a single-use reset link
+  (hashed in DB, 60-minute TTL). `/reset-password?token=…` exchanges it.
+  Email is sent via Amazon SES when `SES_FROM` is set; otherwise logged to
+  stdout for local dev.
+- **Announcements** — officers post to `/admin/announcements` with a level
+  (normal / elevated / critical), audience (public / members / officers), and
+  optional publish-at, expiry, and pinned-until dates. Critical and elevated
+  items appear in a site-wide banner; the full feed is at `/announcements`.
+- **Push notifications** — Web Push (VAPID) opt-in per device from the profile
+  page, with per-channel preferences (events, forms, blogs, announcements).
+  Approval flows for events, blogs, and form publishes enqueue notifications
+  to the `notification_outbox`; `lib/push.ts` drains them when `web-push` is
+  installed and VAPID keys are configured.
+- **Blog approvals** push members on approval (the queue at
+  `/admin/blogs/approval` is unchanged otherwise).
+- **Singleton officer rule** — President, Vice President, and Secretary are
+  marked `is_singleton`; the database trigger and the API both reject a second
+  assignment to the same singleton + school year, returning HTTP 409 with the
+  current holder's name.
+- **Wider layouts** — public content uses `max-w-7xl` and the admin shell
+  uses `max-w-[1600px]`, so tables and grids breathe at 1440px+.
+
+### Database
+
+- New migration `0002_v2_school_year_and_features.sql`:
+  - `school_years`, `member_school_years` tables.
+  - `officers.school_year_id` + `members.school_year_id` columns; the
+    legacy `officers.term_label / term_start / term_end` columns are
+    retained as a denormalised label, kept in sync by trigger.
+  - `officer_positions.is_singleton` with a trigger enforcing one current
+    officer per singleton-position + school year.
+  - `registration_requests` (with `registration_status` enum), one row per
+    application; rejected emails may re-apply.
+  - `password_reset_tokens` (hashed tokens, single-use, expiry).
+  - `announcements`, `announcement_dismissals` (with `announcement_level`
+    and `announcement_audience` enums).
+  - `push_subscriptions`, `notification_preferences`, `notification_outbox`.
+  - Seed updates: officer rows resolve to the current school year; the
+    three approver positions are seeded as singletons.
+
+### Environment variables
+
+- `SES_FROM` (or `MAIL_FROM`) — sender for transactional email; falls back to
+  stdout logging if unset.
+- `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` — required to send
+  real push messages (otherwise the outbox is drained without dispatch).
+- `APP_ORIGIN` — used to build absolute links inside emails.
+
+### Optional dependencies
+
+- `web-push` — install to enable real Web Push delivery. Without it, the
+  notification flow still records preferences, subscriptions, and outbox
+  entries.
+- `@aws-sdk/client-sesv2` — install to enable Amazon SES delivery.
+
 ## [MVP] — 2026-05-22
 
 The MVP consolidates the public site, the member/officer area, the admin

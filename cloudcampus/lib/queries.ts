@@ -10,6 +10,9 @@ import {
 import type { StoredRole } from "@/lib/jwt";
 import { defaultOrg, type OrgInfo } from "@/lib/org";
 import type {
+  Announcement,
+  AnnouncementAudience,
+  AnnouncementLevel,
   Attachment,
   BlogPost,
   FormLink,
@@ -17,9 +20,12 @@ import type {
   OfficerSummary,
   OrgEvent,
   Project,
+  RegistrationRequest,
   ResourceItem,
   ResourceType,
+  SchoolYear,
 } from "@/lib/types";
+import type { Session } from "@/lib/session";
 
 /** Builds the in-app URL that serves an S3 media object (cover / attachment). */
 function mediaUrl(s3Key: string | null | undefined): string | null {
@@ -36,6 +42,7 @@ function mapAttachments(raw: unknown): Attachment[] {
       id: a.id as string,
       kind: isImage ? "image" : "link",
       imageUrl: isImage ? mediaUrl(a.s3_key) : null,
+      key: isImage ? (a.s3_key ?? null) : null,
       url: isImage ? null : (a.url ?? null),
       label: a.label ?? "",
     };
@@ -111,6 +118,7 @@ async function insertAttachments(
 
 const DATABASE_CONFIGURED = Boolean(process.env.DATABASE_URL);
 let warnedAboutDatabase = false;
+const missingRelationsWarned = new Set<string>();
 
 function warnOnce(reason: string): void {
   if (warnedAboutDatabase) return;
@@ -137,9 +145,15 @@ function isConnectionError(err: unknown): boolean {
 }
 
 /**
- * Runs a read query, degrading to an empty result when the database is
- * unreachable so pages can still render their empty states. A real SQL error
- * (e.g. a bad column) still throws so genuine bugs are not hidden.
+ * Runs a read query, degrading to an empty result when:
+ *  - DATABASE_URL is unset, or
+ *  - the database is unreachable, or
+ *  - the relation doesn't exist (Postgres 42P01 / 42703) — i.e. a pending
+ *    migration. This keeps the public layout from 500ing every page when V2
+ *    code is deployed before `npm run db:migrate` has been run.
+ *
+ * A real SQL error (constraint violation, type mismatch on a column that DOES
+ * exist) still throws so genuine bugs are not hidden.
  */
 async function readQuery(
   text: string,
@@ -154,6 +168,19 @@ async function readQuery(
   } catch (err) {
     if (isConnectionError(err)) {
       warnOnce("database is unreachable");
+      return { rows: [] };
+    }
+    const code = (err as { code?: string } | null)?.code ?? "";
+    // 42P01 = undefined_table, 42703 = undefined_column. Both mean the schema
+    // is behind the code — usually a pending migration.
+    if (code === "42P01" || code === "42703") {
+      const message = err instanceof Error ? err.message : String(err);
+      if (!missingRelationsWarned.has(message)) {
+        missingRelationsWarned.add(message);
+        console.warn(
+          `[db] schema out of date (${message}) — run \`npm run db:migrate\`. Returning empty result so pages still render.`,
+        );
+      }
       return { rows: [] };
     }
     throw err;
@@ -249,8 +276,10 @@ function mapEvent(r: any): OrgEvent {
     endsAt: new Date(r.ends_at).toISOString(),
     coverAlt: `${r.title} cover image`,
     coverUrl: mediaUrl(r.cover_s3_key),
+    coverKey: r.cover_s3_key ?? null,
     summary: r.description,
     body: paragraphs(r.body_markdown),
+    bodyMarkdown: r.body_markdown ?? "",
     locationNote: "",
     locationUrl: r.location_url ?? null,
     visibility: r.visibility,
@@ -276,7 +305,9 @@ function mapBlog(r: any): BlogPost {
     status: r.status,
     coverAlt: `${r.title} cover image`,
     coverUrl: mediaUrl(r.cover_s3_key),
+    coverKey: r.cover_s3_key ?? null,
     body: paragraphs(r.body_markdown),
+    bodyMarkdown: r.body_markdown ?? "",
     attachments: mapAttachments(r.attachments),
   };
 }
@@ -287,21 +318,27 @@ function mapProject(r: any): Project {
     title: r.title,
     summary: r.description,
     body: paragraphs(r.body_markdown),
+    bodyMarkdown: r.body_markdown ?? "",
     status: r.status,
     visibility: r.visibility,
     stack: r.tech_stack ?? [],
+    tags: r.tags ?? [],
+    categoryId: r.category_id ?? null,
     contributors: (r.contributors ?? []).map((c: any) => ({
       id: c.id,
       name: c.name,
       course: c.course ?? null,
       roleOnProject: c.role_on_project ?? null,
     })),
+    submittedBy: r.submitted_by,
     repoUrl: r.repo_url ?? null,
     liveUrl: r.live_url ?? null,
+    publishedUrl: r.published_url ?? null,
     startedOn: r.started_on ? formatDate(r.started_on) : "—",
     completedOn: r.completed_on ? formatDate(r.completed_on) : "Ongoing",
     coverAlt: `${r.title} cover image`,
     coverUrl: mediaUrl(r.cover_s3_key),
+    coverKey: r.cover_s3_key ?? null,
     category: r.category_name ?? null,
     attachments: mapAttachments(r.attachments),
   };
@@ -331,9 +368,11 @@ function mapMember(r: any): Member {
     name: r.full_name,
     studentId: r.student_id ?? null,
     course: r.course ?? null,
+    courseId: r.course_id ?? null,
     year: r.year_level ?? null,
     status: (r.status ?? "Active") as Member["status"],
     email: r.contact_email ?? null,
+    accountEmail: r.account_email ?? "",
     bio: r.bio ?? null,
     role: r.role ?? "member",
   };
@@ -353,13 +392,22 @@ const EVENT_SELECT = `
 
 // --- Events -----------------------------------------------------------------
 
-/** Events list. Privileged viewers (member+) see private/non-approved too. */
+/** Events list. Public viewers see only approved+public. Members see approved
+ *  (any visibility). Drafts/pending/rejected/revision_requested are surfaced
+ *  via {@link getEventsByAuthor} on the "your drafts" panel, not here. */
 export async function listEvents(privileged: boolean): Promise<OrgEvent[]> {
-  const where = privileged
-    ? ""
-    : `WHERE e.status = 'approved' AND e.visibility = 'public'`;
+  const vis = privileged ? "" : `AND e.visibility = 'public'`;
   const { rows } = await readQuery(
-    `${EVENT_SELECT} ${where} ORDER BY e.starts_at`,
+    `${EVENT_SELECT} WHERE e.status = 'approved' ${vis} ORDER BY e.starts_at`,
+  );
+  return rows.map(mapEvent);
+}
+
+/** Every event created by `memberId`, all statuses, for the drafts panel. */
+export async function getEventsByAuthor(memberId: string): Promise<OrgEvent[]> {
+  const { rows } = await readQuery(
+    `${EVENT_SELECT} WHERE e.created_by = $1 ORDER BY e.starts_at DESC`,
+    [memberId],
   );
   return rows.map(mapEvent);
 }
@@ -436,11 +484,12 @@ export async function getRelatedBlogs(
   return rows.map(mapBlog);
 }
 
+/** Every blog by `memberId`, ALL statuses, for the author's drafts panel. */
 export async function getBlogsByAuthor(memberId: string): Promise<BlogPost[]> {
   const { rows } = await readQuery(
     `${BLOG_SELECT}
-      WHERE b.author_id = $1 AND b.status = 'approved'
-      ORDER BY COALESCE(b.published_at, b.created_at) DESC`,
+      WHERE b.author_id = $1
+      ORDER BY COALESCE(b.published_at, b.created_at, b.edited_at, b.created_at) DESC`,
     [memberId],
   );
   return rows.map(mapBlog);
@@ -471,13 +520,13 @@ const PROJECT_SELECT = `
     ), '[]'::json) AS attachments
     FROM projects p`;
 
-/** Projects list. Guests see only approved+public. */
+/** Projects list. Guests see approved+public only; members see approved
+ *  with any visibility. Drafts/pending/rejected/revision are on
+ *  {@link getProjectsByContributor} for the contributor's drafts panel. */
 export async function listProjects(privileged: boolean): Promise<Project[]> {
-  const where = privileged
-    ? ""
-    : `WHERE p.status = 'approved' AND p.visibility = 'public'`;
+  const vis = privileged ? "" : `AND p.visibility = 'public'`;
   const { rows } = await readQuery(
-    `${PROJECT_SELECT} ${where} ORDER BY p.created_at DESC`,
+    `${PROJECT_SELECT} WHERE p.status = 'approved' ${vis} ORDER BY p.created_at DESC`,
   );
   return rows.map(mapProject);
 }
@@ -534,8 +583,10 @@ export async function listResourceCategories(): Promise<string[]> {
 // --- Members & officers -----------------------------------------------------
 
 const MEMBER_SELECT = `
-  SELECT m.id, m.full_name, m.student_id, m.contact_email, m.bio, u.role,
-         c.name AS course, y.display_order AS year_level, s.name AS status
+  SELECT m.id, m.full_name, m.student_id, m.contact_email, m.bio,
+         u.role, u.email AS account_email,
+         c.name AS course, m.course_id,
+         y.display_order AS year_level, s.name AS status
     FROM members m
     JOIN users u ON u.id = m.user_id
     LEFT JOIN courses c ON c.id = m.course_id
@@ -552,26 +603,44 @@ export async function getMember(id: string): Promise<Member | null> {
   return rows.length ? mapMember(rows[0]) : null;
 }
 
+function mapOfficer(r: Record<string, unknown>): OfficerSummary {
+  return {
+    id: r.id as string,
+    memberId: r.member_id as string,
+    name: r.full_name as string,
+    position: r.position_name as string,
+    term: (r.school_year_label as string) ?? (r.term_label as string) ?? "",
+    schoolYearId: (r.school_year_id as string) ?? "",
+    isApprover: r.is_approver as boolean,
+    order: r.display_order as number,
+  };
+}
+
+const OFFICER_SELECT = `
+  SELECT o.id, o.member_id, o.school_year_id, m.full_name,
+         p.name AS position_name, p.is_approver, p.display_order,
+         sy.label AS school_year_label
+    FROM officers o
+    JOIN members m ON m.id = o.member_id
+    JOIN officer_positions p ON p.id = o.position_id
+    JOIN school_years sy ON sy.id = o.school_year_id`;
+
 /** Current officers, ordered by position, for the officers roster page. */
-export async function listOfficers(): Promise<OfficerSummary[]> {
+export async function listOfficers(
+  schoolYearId?: string,
+): Promise<OfficerSummary[]> {
+  if (schoolYearId) {
+    const { rows } = await readQuery(
+      `${OFFICER_SELECT} WHERE o.school_year_id = $1
+        ORDER BY p.display_order, m.full_name`,
+      [schoolYearId],
+    );
+    return rows.map(mapOfficer);
+  }
   const { rows } = await readQuery(
-    `SELECT o.id, o.member_id, o.term_label, m.full_name,
-            p.name AS position_name, p.is_approver, p.display_order
-       FROM officers o
-       JOIN members m ON m.id = o.member_id
-       JOIN officer_positions p ON p.id = o.position_id
-      WHERE o.is_current
-      ORDER BY p.display_order`,
+    `${OFFICER_SELECT} WHERE o.is_current ORDER BY p.display_order`,
   );
-  return rows.map((r) => ({
-    id: r.id,
-    memberId: r.member_id,
-    name: r.full_name,
-    position: r.position_name,
-    term: r.term_label,
-    isApprover: r.is_approver,
-    order: r.display_order,
-  }));
+  return rows.map(mapOfficer);
 }
 
 /** All officer roles a member has held, for their profile page. */
@@ -579,24 +648,12 @@ export async function getOfficerHistory(
   memberId: string,
 ): Promise<OfficerSummary[]> {
   const { rows } = await readQuery(
-    `SELECT o.id, o.member_id, o.term_label, m.full_name,
-            p.name AS position_name, p.is_approver, p.display_order
-       FROM officers o
-       JOIN members m ON m.id = o.member_id
-       JOIN officer_positions p ON p.id = o.position_id
+    `${OFFICER_SELECT}
       WHERE o.member_id = $1
-      ORDER BY o.term_start DESC, p.display_order`,
+      ORDER BY sy.start_year DESC, p.display_order`,
     [memberId],
   );
-  return rows.map((r) => ({
-    id: r.id,
-    memberId: r.member_id,
-    name: r.full_name,
-    position: r.position_name,
-    term: r.term_label,
-    isApprover: r.is_approver,
-    order: r.display_order,
-  }));
+  return rows.map(mapOfficer);
 }
 
 // --- Forms ------------------------------------------------------------------
@@ -693,13 +750,18 @@ export async function updateMemberProfile(
   memberId: string,
   fields: {
     name: string;
-    course: string | null;
+    /** V2.1: the form sends `courseId` from the combobox. The legacy `course`
+     *  (a free-text name) is kept as a fallback so older clients keep working
+     *  until the dropdown rollout completes. */
+    courseId: string | null;
+    course?: string | null;
     year: number | null;
     bio: string | null;
     contactEmail: string | null;
   },
 ): Promise<void> {
-  const courseId = await courseIdForName(fields.course);
+  const resolvedCourseId =
+    fields.courseId ?? (await courseIdForName(fields.course ?? null));
   await pool.query(
     `UPDATE members
         SET full_name = $2, course_id = $3,
@@ -711,7 +773,7 @@ export async function updateMemberProfile(
     [
       memberId,
       fields.name,
-      courseId,
+      resolvedCourseId,
       fields.year,
       fields.bio,
       fields.contactEmail,
@@ -852,6 +914,219 @@ export async function createEvent(input: {
   });
 }
 
+// --- Edit + re-approval (V2.1) ---------------------------------------------
+
+/**
+ * Shared edit semantics for blogs/events/projects per V2.1 plan:
+ *   - Only the original author (or an admin) may PATCH the row.
+ *   - A row in 'rejected' status is permanent — no edits.
+ *   - On any change the status flips to 'pending', edited_at = now(),
+ *     and `previous_published_at` preserves the original publish stamp
+ *     (so officers see "previously approved on …" in the queue).
+ *   - For events, votes are wiped so approvers vote from scratch.
+ *   - Attachments are replaced atomically (delete + reinsert).
+ */
+export class EditNotAllowedError extends Error {
+  constructor(public reason: "not_author" | "rejected" | "not_found") {
+    super(reason);
+  }
+}
+
+async function assertEditable(
+  client: PoolClient,
+  table: "blogs" | "events" | "projects",
+  authorColumn: "author_id" | "created_by" | "submitted_by",
+  id: string,
+  memberId: string,
+  isAdmin: boolean,
+): Promise<{ status: string; published_at: string | null }> {
+  const { rows } = await client.query(
+    `SELECT status, ${authorColumn} AS author, published_at
+       FROM ${table} WHERE id = $1`,
+    [id],
+  );
+  if (rows.length === 0) throw new EditNotAllowedError("not_found");
+  const r = rows[0];
+  if (!isAdmin && r.author !== memberId) {
+    throw new EditNotAllowedError("not_author");
+  }
+  if (r.status === "rejected") throw new EditNotAllowedError("rejected");
+  return r;
+}
+
+export async function updateBlog(input: {
+  id: string;
+  memberId: string;
+  isAdmin: boolean;
+  title: string;
+  bodyMarkdown: string;
+  visibility: "public" | "private";
+  coverS3Key: string | null;
+  attachments: AttachmentInput[];
+}): Promise<void> {
+  await withTransaction(async (client) => {
+    const before = await assertEditable(
+      client,
+      "blogs",
+      "author_id",
+      input.id,
+      input.memberId,
+      input.isAdmin,
+    );
+    await client.query(
+      `UPDATE blogs
+          SET title = $2, body_markdown = $3, visibility = $4,
+              cover_s3_key = $5,
+              status = 'pending',
+              edited_at = now(),
+              approved_at = NULL,
+              approved_by = NULL,
+              published_at = NULL,
+              previous_published_at = COALESCE(previous_published_at, $6)
+        WHERE id = $1`,
+      [
+        input.id,
+        input.title,
+        input.bodyMarkdown,
+        input.visibility,
+        input.coverS3Key,
+        before.published_at,
+      ],
+    );
+    await client.query("DELETE FROM blog_attachments WHERE blog_id = $1", [
+      input.id,
+    ]);
+    await insertAttachments(
+      client,
+      "blog_attachments",
+      "blog_id",
+      "caption",
+      input.id,
+      input.attachments,
+    );
+  });
+}
+
+export async function updateProject(input: {
+  id: string;
+  memberId: string;
+  isAdmin: boolean;
+  title: string;
+  description: string;
+  bodyMarkdown: string | null;
+  repoUrl: string | null;
+  liveUrl: string | null;
+  publishedUrl: string | null;
+  techStack: string[];
+  tags: string[];
+  visibility: "public" | "private";
+  categoryId: string | null;
+  coverS3Key: string | null;
+  attachments: AttachmentInput[];
+}): Promise<void> {
+  await withTransaction(async (client) => {
+    const before = await assertEditable(
+      client,
+      "projects",
+      "submitted_by",
+      input.id,
+      input.memberId,
+      input.isAdmin,
+    );
+    await client.query(
+      `UPDATE projects
+          SET title = $2, description = $3, body_markdown = $4,
+              repo_url = $5, live_url = $6, published_url = $7,
+              tech_stack = $8, tags = $9, visibility = $10,
+              category_id = $11, cover_s3_key = $12,
+              status = 'pending',
+              edited_at = now(),
+              previous_published_at = COALESCE(previous_published_at, $13)
+        WHERE id = $1`,
+      [
+        input.id,
+        input.title,
+        input.description,
+        input.bodyMarkdown,
+        input.repoUrl,
+        input.liveUrl,
+        input.publishedUrl,
+        input.techStack,
+        input.tags,
+        input.visibility,
+        input.categoryId,
+        input.coverS3Key,
+        before.published_at,
+      ],
+    );
+    await client.query(
+      "DELETE FROM project_attachments WHERE project_id = $1",
+      [input.id],
+    );
+    await insertAttachments(
+      client,
+      "project_attachments",
+      "project_id",
+      "label",
+      input.id,
+      input.attachments,
+    );
+  });
+}
+
+export async function updateEvent(input: {
+  id: string;
+  memberId: string;
+  isAdmin: boolean;
+  title: string;
+  description: string;
+  bodyMarkdown: string | null;
+  location: string | null;
+  locationUrl: string | null;
+  startsAt: string;
+  endsAt: string;
+  visibility: "public" | "private";
+  coverS3Key: string | null;
+}): Promise<void> {
+  await withTransaction(async (client) => {
+    await assertEditable(
+      client,
+      "events",
+      "created_by",
+      input.id,
+      input.memberId,
+      input.isAdmin,
+    );
+    await client.query(
+      `UPDATE events
+          SET title = $2, description = $3, body_markdown = $4,
+              location = $5, location_url = $6,
+              starts_at = $7, ends_at = $8,
+              visibility = $9, cover_s3_key = $10,
+              status = 'pending',
+              edited_at = now(),
+              approved_at = NULL
+        WHERE id = $1`,
+      [
+        input.id,
+        input.title,
+        input.description,
+        input.bodyMarkdown,
+        input.location,
+        input.locationUrl,
+        input.startsAt,
+        input.endsAt,
+        input.visibility,
+        input.coverS3Key,
+      ],
+    );
+    // Wipe all votes for a clean re-approval round.
+    await client.query("DELETE FROM event_approvals WHERE event_id = $1", [
+      input.id,
+    ]);
+  });
+}
+
 export interface CurrentOfficer {
   officerId: string;
   positionId: string;
@@ -927,7 +1202,7 @@ export async function castEventVote(input: {
   eventId: string;
   positionId: string;
   officerId: string;
-  decision: "approved" | "rejected";
+  decision: "approved" | "rejected" | "revision_requested";
   comment: string | null;
 }): Promise<void> {
   await pool.query(
@@ -935,6 +1210,28 @@ export async function castEventVote(input: {
      VALUES ($1, $2, $3, $4, $5)`,
     [
       input.eventId,
+      input.positionId,
+      input.officerId,
+      input.decision,
+      input.comment,
+    ],
+  );
+}
+
+/** Casts a project-approval vote (V2.1 extension). Validation + status
+ *  finalization happen via project_approvals triggers in migration 0005. */
+export async function castProjectVote(input: {
+  projectId: string;
+  positionId: string;
+  officerId: string;
+  decision: "approved" | "rejected" | "revision_requested";
+  comment: string | null;
+}): Promise<void> {
+  await pool.query(
+    `INSERT INTO project_approvals (project_id, position_id, officer_id, decision, comment)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [
+      input.projectId,
       input.positionId,
       input.officerId,
       input.decision,
@@ -1053,7 +1350,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 // --- Admin: content queues --------------------------------------------------
 
 export async function adminListBlogs(
-  status: "draft" | "pending" | "approved" | "rejected",
+  status: "draft" | "pending" | "approved" | "rejected" | "archived",
 ): Promise<BlogPost[]> {
   const { rows } = await readQuery(
     `${BLOG_SELECT} WHERE b.status = $1
@@ -1075,10 +1372,16 @@ export async function adminListProjects(
 
 /** All officer positions, ordered, for the admin officers page. */
 export async function listPositions(): Promise<
-  Array<{ id: string; name: string; order: number; isApprover: boolean }>
+  Array<{
+    id: string;
+    name: string;
+    order: number;
+    isApprover: boolean;
+    maxIncumbents: number;
+  }>
 > {
   const { rows } = await readQuery(
-    `SELECT id, name, display_order, is_approver
+    `SELECT id, name, display_order, is_approver, max_incumbents
        FROM officer_positions ORDER BY display_order`,
   );
   return rows.map((r) => ({
@@ -1086,26 +1389,36 @@ export async function listPositions(): Promise<
     name: r.name,
     order: r.display_order,
     isApprover: r.is_approver,
+    maxIncumbents: r.max_incumbents ?? 1,
   }));
 }
 
 // --- Admin: write actions ---------------------------------------------------
 
-/** Approves or rejects a blog (FR-ADM-06). Returns the blog title. */
+/** Approves, rejects, or archives a blog (FR-ADM-06). Returns the blog title. */
 export async function setBlogStatus(
   blogId: string,
-  status: "approved" | "rejected",
+  status: "approved" | "rejected" | "archived",
   reviewerMemberId: string,
 ): Promise<string | null> {
-  const sql =
-    status === "approved"
-      ? `UPDATE blogs
-            SET status = 'approved', approved_by = $2, approved_at = now(),
-                published_at = COALESCE(published_at, now())
-          WHERE id = $1 RETURNING title`
-      : `UPDATE blogs SET status = 'rejected', approved_by = $2
-          WHERE id = $1 RETURNING title`;
-  const { rows } = await pool.query(sql, [blogId, reviewerMemberId]);
+  if (status === "approved") {
+    const { rows } = await pool.query(
+      `UPDATE blogs
+          SET status = 'approved', approved_by = $2, approved_at = now(),
+              published_at = COALESCE(published_at, now())
+        WHERE id = $1 RETURNING title`,
+      [blogId, reviewerMemberId],
+    );
+    return rows[0]?.title ?? null;
+  }
+  // Cast the status text to blog_status so Postgres can resolve the parameter
+  // type; reviewerMemberId is included so 'rejected'/'archived' decisions are
+  // attributed too.
+  const { rows } = await pool.query(
+    `UPDATE blogs SET status = $2::blog_status, approved_by = $3
+      WHERE id = $1 RETURNING title`,
+    [blogId, status, reviewerMemberId],
+  );
   return rows[0]?.title ?? null;
 }
 
@@ -1115,17 +1428,22 @@ export async function setProjectStatus(
   status: "approved" | "rejected" | "archived",
   reviewerMemberId: string,
 ): Promise<string | null> {
-  const sql =
-    status === "approved"
-      ? `UPDATE projects
-            SET status = 'approved', approved_by = $2, approved_at = now()
-          WHERE id = $1 RETURNING title`
-      : `UPDATE projects SET status = $3 WHERE id = $1 RETURNING title`;
-  const params =
-    status === "approved"
-      ? [projectId, reviewerMemberId]
-      : [projectId, reviewerMemberId, status];
-  const { rows } = await pool.query(sql, params);
+  if (status === "approved") {
+    const { rows } = await pool.query(
+      `UPDATE projects
+          SET status = 'approved', approved_by = $2, approved_at = now()
+        WHERE id = $1 RETURNING title`,
+      [projectId, reviewerMemberId],
+    );
+    return rows[0]?.title ?? null;
+  }
+  // Reject / archive paths don't write approved_by; cast $2 so Postgres can
+  // resolve the project_status enum from a text parameter.
+  const { rows } = await pool.query(
+    `UPDATE projects SET status = $2::project_status
+      WHERE id = $1 RETURNING title`,
+    [projectId, status],
+  );
   return rows[0]?.title ?? null;
 }
 
@@ -1212,43 +1530,84 @@ export async function togglePositionApprover(
     : null;
 }
 
+export class SingletonConflictError extends Error {
+  positionName: string;
+  currentHolder: string;
+  constructor(positionName: string, currentHolder: string) {
+    super(
+      `${positionName} already has a current officer (${currentHolder}) for this school year.`,
+    );
+    this.positionName = positionName;
+    this.currentHolder = currentHolder;
+    this.name = "SingletonConflictError";
+  }
+}
+
 /**
  * Assigns a member to an officer position for a school year (FR-ADM-04).
- * A position holds one current officer at a time, so any sitting holder's
- * term is ended first; their assignment stays as officer history.
+ * For non-singleton positions, multiple officers may co-hold; the previously
+ * current holder (if any, same member, same position) keeps their record.
+ * For singleton positions (President / VP / Secretary), the position must
+ * be vacant for the school year — caller ends the existing term first.
  */
 export async function assignOfficer(input: {
   memberId: string;
   positionId: string;
-  termLabel: string;
+  schoolYearId: string;
 }): Promise<{ memberName: string; positionName: string } | null> {
   return withTransaction(async (client) => {
     const position = await client.query(
-      `SELECT name, display_order FROM officer_positions WHERE id = $1`,
+      `SELECT name, display_order, max_incumbents
+         FROM officer_positions WHERE id = $1`,
       [input.positionId],
     );
     const member = await client.query(
       `SELECT full_name FROM members WHERE id = $1`,
       [input.memberId],
     );
-    if (position.rowCount === 0 || member.rowCount === 0) return null;
-
-    // End the position's current holder, if any — keeps their term as history.
-    await client.query(
-      `UPDATE officers
-          SET is_current = FALSE, term_end = COALESCE(term_end, CURRENT_DATE)
-        WHERE position_id = $1 AND is_current`,
-      [input.positionId],
+    const sy = await client.query(
+      `SELECT 1 FROM school_years WHERE id = $1`,
+      [input.schoolYearId],
     );
+    if (
+      position.rowCount === 0 ||
+      member.rowCount === 0 ||
+      sy.rowCount === 0
+    ) {
+      return null;
+    }
+
+    // Check the per-position cap. The DB trigger also enforces this, but
+    // pre-checking lets us return a structured error to the caller.
+    const cap = (position.rows[0].max_incumbents as number) ?? 1;
+    const filled = await client.query(
+      `SELECT count(*)::int AS n, array_agg(m.full_name) AS holders
+         FROM officers o
+         JOIN members m ON m.id = o.member_id
+        WHERE o.position_id    = $1
+          AND o.school_year_id = $2
+          AND o.is_current`,
+      [input.positionId, input.schoolYearId],
+    );
+    const used = (filled.rows[0]?.n as number) ?? 0;
+    if (used >= cap) {
+      const holders =
+        (filled.rows[0]?.holders as string[] | null)?.join(", ") ?? "";
+      throw new SingletonConflictError(
+        position.rows[0].name as string,
+        holders,
+      );
+    }
+
     await client.query(
       `INSERT INTO officers
-         (member_id, position_id, term_label, term_start, display_order,
+         (member_id, position_id, school_year_id, term_start, display_order,
           is_current)
        VALUES ($1, $2, $3, CURRENT_DATE, $4, TRUE)`,
       [
         input.memberId,
         input.positionId,
-        input.termLabel,
+        input.schoolYearId,
         position.rows[0].display_order,
       ],
     );
@@ -1626,10 +1985,15 @@ export async function deleteLookup(
  * when the database is unreachable or the site_settings row is missing.
  */
 export async function getOrg(): Promise<OrgInfo> {
+  // The school-year label is the source of truth for `term`; the free-text
+  // term column was dropped in migration 0003.
   const { rows } = await readQuery(
-    `SELECT org_name, short_name, tagline, about, term,
-            contact_email, contact_address, contact_hours
-       FROM site_settings WHERE id = TRUE`,
+    `SELECT s.org_name, s.short_name, s.tagline, s.about,
+            s.contact_email, s.contact_address, s.contact_hours,
+            sy.label AS school_year_label
+       FROM site_settings s
+       LEFT JOIN school_years sy ON sy.is_current
+      WHERE s.id = TRUE`,
   );
   const r = rows[0];
   if (!r) return defaultOrg;
@@ -1637,7 +2001,7 @@ export async function getOrg(): Promise<OrgInfo> {
     name: r.org_name,
     shortName: r.short_name,
     tagline: r.tagline,
-    term: r.term,
+    term: (r.school_year_label as string | null) ?? "",
     about: Array.isArray(r.about) ? r.about : [],
     contact: {
       email: r.contact_email,
@@ -1647,20 +2011,19 @@ export async function getOrg(): Promise<OrgInfo> {
   };
 }
 
-/** Updates the organization profile (FR-ADM-08). */
-export async function updateOrg(input: OrgInfo): Promise<void> {
+/** Updates the organization profile (FR-ADM-08). `term` is intentionally
+ *  read-only — change the current school year under /admin/school-years. */
+export async function updateOrg(input: Omit<OrgInfo, "term">): Promise<void> {
   await pool.query(
     `UPDATE site_settings
         SET org_name = $1, short_name = $2, tagline = $3, about = $4,
-            term = $5, contact_email = $6, contact_address = $7,
-            contact_hours = $8
+            contact_email = $5, contact_address = $6, contact_hours = $7
       WHERE id = TRUE`,
     [
       input.name,
       input.shortName,
       input.tagline,
       input.about,
-      input.term,
       input.contact.email,
       input.contact.address,
       input.contact.hours,
@@ -1760,3 +2123,612 @@ export async function getMemberPhotoKey(
   );
   return rows[0]?.photo_s3_key ?? null;
 }
+
+// ---------------------------------------------------------------------------
+// V2: school years
+// ---------------------------------------------------------------------------
+
+function mapSchoolYear(r: Record<string, unknown>): SchoolYear {
+  return {
+    id: r.id as string,
+    label: r.label as string,
+    startYear: r.start_year as number,
+    endYear: r.end_year as number,
+    startsOn: new Date(r.starts_on as string).toISOString(),
+    endsOn: new Date(r.ends_on as string).toISOString(),
+    isCurrent: r.is_current as boolean,
+  };
+}
+
+export async function listSchoolYears(): Promise<SchoolYear[]> {
+  const { rows } = await readQuery(
+    `SELECT id, label, start_year, end_year, starts_on, ends_on, is_current
+       FROM school_years ORDER BY start_year DESC`,
+  );
+  return rows.map(mapSchoolYear);
+}
+
+export async function getCurrentSchoolYear(): Promise<SchoolYear | null> {
+  const { rows } = await readQuery(
+    `SELECT id, label, start_year, end_year, starts_on, ends_on, is_current
+       FROM school_years WHERE is_current LIMIT 1`,
+  );
+  return rows.length ? mapSchoolYear(rows[0]) : null;
+}
+
+export async function createSchoolYear(startYear: number): Promise<string> {
+  const { rows } = await pool.query(
+    `INSERT INTO school_years (start_year, end_year, starts_on, ends_on)
+     VALUES ($1, $1 + 1, make_date($1, 8, 1), make_date($1 + 1, 7, 31))
+     RETURNING id`,
+    [startYear],
+  );
+  return rows[0].id as string;
+}
+
+/**
+ * Promotes a school year to current, rolling over the previous current SY.
+ * Officers in the outgoing SY become history (`is_current = FALSE`) and the
+ * outgoing roster is snapshot into `member_school_years` for archive lookups.
+ */
+export async function promoteSchoolYearToCurrent(
+  schoolYearId: string,
+): Promise<{ outgoingLabel: string | null; incomingLabel: string } | null> {
+  return withTransaction(async (client) => {
+    const incoming = await client.query(
+      `SELECT label FROM school_years WHERE id = $1`,
+      [schoolYearId],
+    );
+    if (incoming.rowCount === 0) return null;
+
+    const outgoing = await client.query(
+      `SELECT id, label FROM school_years WHERE is_current AND id <> $1`,
+      [schoolYearId],
+    );
+    const outgoingId = outgoing.rows[0]?.id as string | undefined;
+
+    // 1. End all current officers (their school_year_id stays — they belong
+    //    to the outgoing SY in history).
+    await client.query(
+      `UPDATE officers SET is_current = FALSE WHERE is_current`,
+    );
+
+    // 2. Snapshot the roster into the outgoing SY's member_school_years.
+    if (outgoingId) {
+      await client.query(
+        `INSERT INTO member_school_years
+           (member_id, school_year_id, status_id, year_level_id)
+         SELECT m.id, $1, m.status_id, m.year_level_id FROM members m
+         ON CONFLICT (member_id, school_year_id) DO UPDATE
+           SET status_id = EXCLUDED.status_id,
+               year_level_id = EXCLUDED.year_level_id,
+               recorded_at = now()`,
+        [outgoingId],
+      );
+    }
+
+    // 3. Flip the current flag — unique partial index ensures atomicity.
+    await client.query(`UPDATE school_years SET is_current = FALSE WHERE is_current`);
+    await client.query(
+      `UPDATE school_years SET is_current = TRUE WHERE id = $1`,
+      [schoolYearId],
+    );
+
+    return {
+      outgoingLabel: outgoing.rows[0]?.label ?? null,
+      incomingLabel: incoming.rows[0].label as string,
+    };
+  });
+}
+
+export async function deleteSchoolYear(id: string): Promise<string | null> {
+  // Refuse to delete the current SY or any SY that still has officers.
+  const { rows } = await pool.query(
+    `DELETE FROM school_years
+      WHERE id = $1
+        AND NOT is_current
+        AND NOT EXISTS (SELECT 1 FROM officers WHERE school_year_id = $1)
+      RETURNING label`,
+    [id],
+  );
+  return rows[0]?.label ?? null;
+}
+
+export async function listMembersForSchoolYear(
+  schoolYearId: string,
+): Promise<Member[]> {
+  const { rows } = await readQuery(
+    `SELECT m.id, m.full_name, m.student_id, m.contact_email, m.bio, u.role,
+            c.name AS course, y.display_order AS year_level,
+            COALESCE(s_hist.name, s_live.name) AS status
+       FROM member_school_years msy
+       JOIN members m ON m.id = msy.member_id
+       JOIN users u ON u.id = m.user_id
+       LEFT JOIN courses c ON c.id = m.course_id
+       LEFT JOIN year_levels y ON y.id = COALESCE(msy.year_level_id, m.year_level_id)
+       LEFT JOIN member_statuses s_hist ON s_hist.id = msy.status_id
+       LEFT JOIN member_statuses s_live ON s_live.id = m.status_id
+      WHERE msy.school_year_id = $1
+      ORDER BY m.full_name`,
+    [schoolYearId],
+  );
+  return rows.map(mapMember);
+}
+
+// ---------------------------------------------------------------------------
+// V2: registration requests
+// ---------------------------------------------------------------------------
+
+function mapRegistration(r: Record<string, unknown>): RegistrationRequest {
+  return {
+    id: r.id as string,
+    email: r.email as string,
+    fullName: r.full_name as string,
+    studentId: (r.student_id as string | null) ?? null,
+    course: (r.course as string | null) ?? null,
+    year: (r.year_level as number | null) ?? null,
+    schoolYearLabel: (r.school_year_label as string) ?? "",
+    status: r.status as RegistrationRequest["status"],
+    rejectionNote: (r.rejection_note as string | null) ?? null,
+    createdAt: new Date(r.created_at as string).toISOString(),
+    reviewedAt: r.reviewed_at
+      ? new Date(r.reviewed_at as string).toISOString()
+      : null,
+  };
+}
+
+const REGISTRATION_SELECT = `
+  SELECT r.id, r.email, r.full_name, r.student_id, r.status, r.rejection_note,
+         r.created_at, r.reviewed_at,
+         c.name AS course, y.display_order AS year_level,
+         sy.label AS school_year_label
+    FROM registration_requests r
+    LEFT JOIN courses c ON c.id = r.course_id
+    LEFT JOIN year_levels y ON y.id = r.year_level_id
+    JOIN school_years sy ON sy.id = r.school_year_id`;
+
+export type RegistrationDuplicate = "email" | "studentId";
+
+export async function createRegistrationRequest(input: {
+  email: string;
+  passwordHash: string;
+  fullName: string;
+  studentId: string | null;
+  courseId: string | null;
+  year: number | null;
+}): Promise<
+  | { id: string }
+  | { duplicate: RegistrationDuplicate }
+  | { invalidCourse: true }
+> {
+  const existingUser = await pool.query(
+    `SELECT 1 FROM users WHERE email = $1`,
+    [input.email],
+  );
+  if ((existingUser.rowCount ?? 0) > 0) return { duplicate: "email" };
+
+  const existingPending = await pool.query(
+    `SELECT 1 FROM registration_requests
+      WHERE lower(email) = lower($1) AND status IN ('pending', 'approved')`,
+    [input.email],
+  );
+  if ((existingPending.rowCount ?? 0) > 0) return { duplicate: "email" };
+
+  if (input.studentId) {
+    const existingStudentId = await pool.query(
+      `SELECT 1 FROM members WHERE student_id = $1
+        UNION ALL
+       SELECT 1 FROM registration_requests
+        WHERE student_id = $1 AND status <> 'rejected'`,
+      [input.studentId],
+    );
+    if ((existingStudentId.rowCount ?? 0) > 0) {
+      return { duplicate: "studentId" };
+    }
+  }
+
+  if (input.courseId) {
+    const course = await pool.query(`SELECT 1 FROM courses WHERE id = $1`, [
+      input.courseId,
+    ]);
+    if ((course.rowCount ?? 0) === 0) return { invalidCourse: true };
+  }
+
+  const { rows } = await pool.query(
+    `INSERT INTO registration_requests
+       (email, password_hash, full_name, student_id, course_id, year_level_id,
+        school_year_id)
+     VALUES ($1, $2, $3, $4, $5,
+       (SELECT id FROM year_levels WHERE display_order = $6),
+       (SELECT id FROM school_years WHERE is_current))
+     RETURNING id`,
+    [
+      input.email,
+      input.passwordHash,
+      input.fullName,
+      input.studentId,
+      input.courseId,
+      input.year,
+    ],
+  );
+  return { id: rows[0].id as string };
+}
+
+export async function listRegistrationRequests(
+  status?: RegistrationRequest["status"],
+): Promise<RegistrationRequest[]> {
+  if (status) {
+    const { rows } = await readQuery(
+      `${REGISTRATION_SELECT} WHERE r.status = $1 ORDER BY r.created_at DESC`,
+      [status],
+    );
+    return rows.map(mapRegistration);
+  }
+  const { rows } = await readQuery(
+    `${REGISTRATION_SELECT} ORDER BY r.created_at DESC`,
+  );
+  return rows.map(mapRegistration);
+}
+
+export async function approveRegistration(
+  requestId: string,
+  reviewerUserId: string,
+): Promise<{ memberId: string; email: string; name: string } | null> {
+  return withTransaction(async (client) => {
+    const req = await client.query(
+      `SELECT email, password_hash, full_name, student_id, course_id,
+              year_level_id, school_year_id
+         FROM registration_requests
+        WHERE id = $1 AND status = 'pending'
+        FOR UPDATE`,
+      [requestId],
+    );
+    if (req.rowCount === 0) return null;
+    const r = req.rows[0];
+
+    const user = await client.query(
+      `INSERT INTO users (email, password_hash, role)
+       VALUES ($1, $2, 'member') RETURNING id`,
+      [r.email, r.password_hash],
+    );
+    const member = await client.query(
+      `INSERT INTO members
+         (user_id, full_name, student_id, course_id, year_level_id,
+          school_year_id, contact_email, status_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7,
+         (SELECT id FROM member_statuses WHERE name = 'Active'))
+       RETURNING id`,
+      [
+        user.rows[0].id,
+        r.full_name,
+        r.student_id,
+        r.course_id,
+        r.year_level_id,
+        r.school_year_id,
+        r.email,
+      ],
+    );
+
+    await client.query(
+      `UPDATE registration_requests
+          SET status = 'approved', reviewed_by = $2, reviewed_at = now()
+        WHERE id = $1`,
+      [requestId, reviewerUserId],
+    );
+
+    return {
+      memberId: member.rows[0].id as string,
+      email: r.email as string,
+      name: r.full_name as string,
+    };
+  });
+}
+
+export async function rejectRegistration(
+  requestId: string,
+  reviewerUserId: string,
+  note: string,
+): Promise<{ email: string; name: string } | null> {
+  const { rows } = await pool.query(
+    `UPDATE registration_requests
+        SET status = 'rejected', rejection_note = $3,
+            reviewed_by = $2, reviewed_at = now()
+      WHERE id = $1 AND status = 'pending'
+      RETURNING email, full_name`,
+    [requestId, reviewerUserId, note],
+  );
+  return rows[0]
+    ? { email: rows[0].email as string, name: rows[0].full_name as string }
+    : null;
+}
+
+// ---------------------------------------------------------------------------
+// V2: password reset
+// ---------------------------------------------------------------------------
+
+export async function findUserIdByEmail(
+  email: string,
+): Promise<string | null> {
+  const { rows } = await readQuery(
+    `SELECT id FROM users WHERE email = $1 AND is_active = TRUE`,
+    [email],
+  );
+  return (rows[0]?.id as string) ?? null;
+}
+
+export async function storePasswordResetToken(input: {
+  userId: string;
+  tokenHash: string;
+  expiresAt: Date;
+}): Promise<void> {
+  await pool.query(
+    `INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
+     VALUES ($1, $2, $3)`,
+    [input.userId, input.tokenHash, input.expiresAt.toISOString()],
+  );
+}
+
+export async function consumePasswordResetToken(
+  tokenHash: string,
+  newPasswordHash: string,
+): Promise<boolean> {
+  return withTransaction(async (client) => {
+    const token = await client.query(
+      `SELECT id, user_id FROM password_reset_tokens
+        WHERE token_hash = $1
+          AND used_at IS NULL
+          AND expires_at > now()
+        FOR UPDATE`,
+      [tokenHash],
+    );
+    if (token.rowCount === 0) return false;
+    await client.query(
+      `UPDATE users SET password_hash = $2 WHERE id = $1`,
+      [token.rows[0].user_id, newPasswordHash],
+    );
+    await client.query(
+      `UPDATE password_reset_tokens SET used_at = now() WHERE id = $1`,
+      [token.rows[0].id],
+    );
+    return true;
+  });
+}
+
+// V2.1 §4: email change with verification ----------------------------------
+
+export class EmailTakenError extends Error {
+  constructor() {
+    super("email_taken");
+  }
+}
+
+/** Inserts a pending email-change request. Caller emails the cleartext token. */
+export async function storeEmailChangeRequest(input: {
+  userId: string;
+  newEmail: string;
+  tokenHash: string;
+  expiresAt: Date;
+}): Promise<void> {
+  // Block if the address is already in use by another active user.
+  const collide = await pool.query(
+    `SELECT 1 FROM users WHERE lower(email) = lower($1) AND id <> $2`,
+    [input.newEmail, input.userId],
+  );
+  if ((collide.rowCount ?? 0) > 0) {
+    throw new EmailTakenError();
+  }
+  await pool.query(
+    `INSERT INTO email_change_requests (user_id, new_email, token_hash, expires_at)
+     VALUES ($1, $2, $3, $4)`,
+    [
+      input.userId,
+      input.newEmail,
+      input.tokenHash,
+      input.expiresAt.toISOString(),
+    ],
+  );
+}
+
+/** Consumes a not-yet-used + not-expired token and swaps users.email. */
+export async function consumeEmailChangeToken(
+  tokenHash: string,
+): Promise<{ userId: string; newEmail: string } | null> {
+  return withTransaction(async (client) => {
+    const token = await client.query(
+      `SELECT id, user_id, new_email
+         FROM email_change_requests
+        WHERE token_hash = $1
+          AND used_at IS NULL
+          AND expires_at > now()
+        FOR UPDATE`,
+      [tokenHash],
+    );
+    if (token.rowCount === 0) return null;
+    const row = token.rows[0];
+    try {
+      await client.query(`UPDATE users SET email = $2 WHERE id = $1`, [
+        row.user_id,
+        row.new_email,
+      ]);
+    } catch {
+      // Unique CITEXT collision — someone else took the address between
+      // initiation and confirmation. Mark the row used to prevent retries.
+      await client.query(
+        `UPDATE email_change_requests SET used_at = now() WHERE id = $1`,
+        [row.id],
+      );
+      throw new EmailTakenError();
+    }
+    await client.query(
+      `UPDATE email_change_requests SET used_at = now() WHERE id = $1`,
+      [row.id],
+    );
+    return { userId: row.user_id, newEmail: row.new_email };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// V2: announcements
+// ---------------------------------------------------------------------------
+
+function mapAnnouncement(r: Record<string, unknown>): Announcement {
+  return {
+    id: r.id as string,
+    title: r.title as string,
+    bodyMarkdown: r.body_markdown as string,
+    level: r.level as AnnouncementLevel,
+    audience: r.audience as AnnouncementAudience,
+    publishedAt: new Date(r.published_at as string).toISOString(),
+    expiresAt: r.expires_at
+      ? new Date(r.expires_at as string).toISOString()
+      : null,
+    pinnedUntil: r.pinned_until
+      ? new Date(r.pinned_until as string).toISOString()
+      : null,
+    authorId: r.author_id as string,
+    authorName: (r.author_name as string) ?? "",
+  };
+}
+
+const ANNOUNCEMENT_SELECT = `
+  SELECT a.*, m.full_name AS author_name
+    FROM announcements a
+    JOIN members m ON m.id = a.author_id`;
+
+/**
+ * Announcements the given role can see and have not yet dismissed, ordered:
+ * pinned/critical/elevated first, then by published_at descending.
+ */
+export async function listAnnouncementsForViewer(
+  session: Session,
+): Promise<Announcement[]> {
+  const role = session.role;
+  const audiences: AnnouncementAudience[] =
+    role === "guest"
+      ? ["public"]
+      : role === "officer" || role === "admin"
+        ? ["public", "members", "officers"]
+        : ["public", "members"];
+
+  const dismissed = session.userId
+    ? `AND NOT EXISTS (
+         SELECT 1 FROM announcement_dismissals d
+          WHERE d.announcement_id = a.id AND d.user_id = $2
+       )`
+    : "";
+
+  const params: unknown[] = [audiences];
+  if (session.userId) params.push(session.userId);
+
+  const { rows } = await readQuery(
+    `${ANNOUNCEMENT_SELECT}
+      WHERE a.audience = ANY($1::announcement_audience[])
+        AND a.published_at <= now()
+        AND (a.expires_at IS NULL OR a.expires_at > now())
+        ${dismissed}
+      ORDER BY
+        CASE WHEN a.pinned_until IS NOT NULL AND a.pinned_until > now() THEN 0 ELSE 1 END,
+        CASE a.level WHEN 'critical' THEN 0 WHEN 'elevated' THEN 1 ELSE 2 END,
+        a.published_at DESC`,
+    params,
+  );
+  return rows.map(mapAnnouncement);
+}
+
+export async function listAnnouncementsAdmin(): Promise<Announcement[]> {
+  const { rows } = await readQuery(
+    `${ANNOUNCEMENT_SELECT} ORDER BY a.created_at DESC`,
+  );
+  return rows.map(mapAnnouncement);
+}
+
+export async function getAnnouncement(id: string): Promise<Announcement | null> {
+  const { rows } = await readQuery(
+    `${ANNOUNCEMENT_SELECT} WHERE a.id = $1`,
+    [id],
+  );
+  return rows.length ? mapAnnouncement(rows[0]) : null;
+}
+
+export async function createAnnouncement(input: {
+  authorId: string;
+  title: string;
+  bodyMarkdown: string;
+  level: AnnouncementLevel;
+  audience: AnnouncementAudience;
+  publishedAt: Date | null;
+  expiresAt: Date | null;
+  pinnedUntil: Date | null;
+}): Promise<string> {
+  const { rows } = await pool.query(
+    `INSERT INTO announcements
+       (author_id, title, body_markdown, level, audience, published_at,
+        expires_at, pinned_until)
+     VALUES ($1, $2, $3, $4, $5, COALESCE($6, now()), $7, $8)
+     RETURNING id`,
+    [
+      input.authorId,
+      input.title,
+      input.bodyMarkdown,
+      input.level,
+      input.audience,
+      input.publishedAt?.toISOString() ?? null,
+      input.expiresAt?.toISOString() ?? null,
+      input.pinnedUntil?.toISOString() ?? null,
+    ],
+  );
+  return rows[0].id as string;
+}
+
+export async function updateAnnouncement(
+  id: string,
+  input: {
+    title: string;
+    bodyMarkdown: string;
+    level: AnnouncementLevel;
+    audience: AnnouncementAudience;
+    publishedAt: Date | null;
+    expiresAt: Date | null;
+    pinnedUntil: Date | null;
+  },
+): Promise<string | null> {
+  const { rows } = await pool.query(
+    `UPDATE announcements
+        SET title = $2, body_markdown = $3, level = $4, audience = $5,
+            published_at = COALESCE($6, published_at),
+            expires_at = $7, pinned_until = $8
+      WHERE id = $1 RETURNING title`,
+    [
+      id,
+      input.title,
+      input.bodyMarkdown,
+      input.level,
+      input.audience,
+      input.publishedAt?.toISOString() ?? null,
+      input.expiresAt?.toISOString() ?? null,
+      input.pinnedUntil?.toISOString() ?? null,
+    ],
+  );
+  return rows[0]?.title ?? null;
+}
+
+export async function deleteAnnouncement(id: string): Promise<string | null> {
+  const { rows } = await pool.query(
+    `DELETE FROM announcements WHERE id = $1 RETURNING title`,
+    [id],
+  );
+  return rows[0]?.title ?? null;
+}
+
+export async function dismissAnnouncement(
+  userId: string,
+  announcementId: string,
+): Promise<void> {
+  await pool.query(
+    `INSERT INTO announcement_dismissals (user_id, announcement_id)
+     VALUES ($1, $2)
+     ON CONFLICT DO NOTHING`,
+    [userId, announcementId],
+  );
+}
+

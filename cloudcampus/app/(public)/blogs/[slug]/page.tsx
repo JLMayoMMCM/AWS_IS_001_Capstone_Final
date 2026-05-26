@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Pencil } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { AccessDenied } from "@/components/cloudcampus/access-denied";
+import { ApprovalPanel } from "@/components/cloudcampus/approval-panel";
 import { BackLink } from "@/components/cloudcampus/back-link";
 import { BlogPreviewCard } from "@/components/cloudcampus/blog-preview-card";
 import { PlaceholderImage } from "@/components/cloudcampus/placeholder-image";
@@ -32,6 +35,13 @@ export default async function BlogDetailPage({ params }: Params) {
   const session = await getSession();
   // Private posts are hidden from guests (FR-PUB-10).
   if (blog.visibility === "private" && session.role === "guest") {
+    return <AccessDenied />;
+  }
+
+  const isAuthor = !!session.memberId && session.memberId === blog.authorId;
+  const isOfficer = session.role === "officer" || session.role === "admin";
+  // V2.1 §1.4: non-approved posts are only visible to the author + officers.
+  if (blog.status !== "approved" && !isAuthor && !isOfficer) {
     return <AccessDenied />;
   }
 
@@ -69,8 +79,24 @@ export default async function BlogDetailPage({ params }: Params) {
           {blog.visibility === "private" && (
             <Badge variant="outline">Private</Badge>
           )}
+          {blog.status !== "approved" && (
+            <Badge variant="secondary">{blog.status}</Badge>
+          )}
         </div>
+        {(isAuthor || session.role === "admin") &&
+          blog.status !== "rejected" && (
+            <Button asChild size="sm" variant="outline">
+              <Link href={`/blogs/${blog.slug}/edit`}>
+                <Pencil />
+                Edit
+              </Link>
+            </Button>
+          )}
       </header>
+
+      {isOfficer && blog.status === "pending" && (
+        <ApprovalPanel entity="blog" id={blog.id} status={blog.status} />
+      )}
 
       <div className="space-y-4 leading-relaxed text-foreground/90">
         {blog.body.map((paragraph, i) => (

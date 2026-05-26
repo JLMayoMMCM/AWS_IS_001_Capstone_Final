@@ -15,9 +15,10 @@ const ACTION: Record<string, string> = {
 export async function POST(request: Request, { params }: Params) {
   const { id } = await params;
 
+  // V2.1: officers + admins act on projects from the queue OR inline.
   let session;
   try {
-    session = await requireRole("admin");
+    session = await requireRole("officer");
   } catch (err) {
     return authErrorResponse(err);
   }

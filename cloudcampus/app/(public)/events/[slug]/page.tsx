@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   AlertTriangle,
@@ -7,12 +8,14 @@ import {
   Clock3,
   ExternalLink,
   MapPin,
+  Pencil,
 } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AccessDenied } from "@/components/cloudcampus/access-denied";
+import { ApprovalPanel } from "@/components/cloudcampus/approval-panel";
 import { BackLink } from "@/components/cloudcampus/back-link";
 import { PlaceholderImage } from "@/components/cloudcampus/placeholder-image";
 import { UserAvatar } from "@/components/cloudcampus/user-avatar";
@@ -57,6 +60,14 @@ export default async function EventDetailPage({ params }: Params) {
   const publicView =
     event.status === "approved" && event.visibility === "public";
   if (session.role === "guest" && !publicView) return <AccessDenied />;
+
+  const isCreator =
+    !!session.memberId && session.memberId === event.createdBy;
+  const isOfficer = session.role === "officer" || session.role === "admin";
+  // V2.1 §1.4: only approved events are visible to other members.
+  if (event.status !== "approved" && !isCreator && !isOfficer) {
+    return <AccessDenied />;
+  }
 
   const past = isPast(event.startsAt);
 
@@ -111,6 +122,24 @@ export default async function EventDetailPage({ params }: Params) {
           <h1 className="text-3xl font-bold leading-tight tracking-[-0.02em] md:text-4xl">
             {event.title}
           </h1>
+
+          {(isCreator || session.role === "admin") &&
+            event.status !== "rejected" && (
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/events/${event.slug}/edit`}>
+                  <Pencil />
+                  Edit event
+                </Link>
+              </Button>
+            )}
+
+          {isOfficer && event.status === "pending" && (
+            <ApprovalPanel
+              entity="event"
+              id={event.id}
+              status={event.status}
+            />
+          )}
 
           <section className="space-y-3">
             <h2 className="text-xl font-semibold">About this event</h2>

@@ -39,7 +39,7 @@ export default async function EventApprovalsPage() {
       <BackLink href="/events" label="Events" />
       <PageHeader
         title="Event approvals"
-        subtitle={`You vote as ${officer.positionName}. An event is published once all three approvers approve it.`}
+        subtitle={`You vote as ${officer.positionName}. An event is published once every approver votes to approve; any single rejection rejects it.`}
       />
       <ApprovalQueue
         events={events}

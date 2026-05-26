@@ -2,22 +2,23 @@ import type { Metadata } from "next";
 
 import { PageHeader } from "@/components/cloudcampus/page-header";
 import {
-  getOrg,
   listMembers,
   listOfficers,
   listPositions,
+  listSchoolYears,
 } from "@/lib/queries";
 import { OfficersAdminView } from "./officers-admin-view";
 
 export const metadata: Metadata = { title: "Officers" };
 
 export default async function AdminOfficersPage() {
-  const [positions, officers, members, org] = await Promise.all([
+  const [positions, officers, members, schoolYears] = await Promise.all([
     listPositions(),
     listOfficers(),
     listMembers(),
-    getOrg(),
+    listSchoolYears(),
   ]);
+  const currentSchoolYear = schoolYears.find((s) => s.isCurrent) ?? null;
 
   return (
     <div className="space-y-6">
@@ -29,7 +30,8 @@ export default async function AdminOfficersPage() {
         positions={positions}
         officers={officers}
         members={members}
-        term={org.term}
+        schoolYears={schoolYears}
+        currentSchoolYearId={currentSchoolYear?.id ?? ""}
       />
     </div>
   );

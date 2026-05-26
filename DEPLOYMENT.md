@@ -119,4 +119,6 @@ Do these once the app is live on Amplify (FEAS §3.5):
 ## Local development
 
 See `cloudcampus/db/README.md`. In short: `docker compose up -d`, then
-`npm run db:migrate && npm run db:seed`, then `npm run dev`.
+`npm run db:migrate`, create the first admin with
+`node scripts/_create-admin.mjs admin@example.org change-me`, then
+`npm run dev`.

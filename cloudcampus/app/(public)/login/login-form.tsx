@@ -88,11 +88,12 @@ export function LoginForm() {
         {submitting ? "Signing in…" : "Sign in"}
       </Button>
       <p className="text-center text-sm text-muted-foreground">
-        Forgot your password?{" "}
-        <Link href="/officers" className="text-foreground hover:underline">
-          Contact an officer
-        </Link>{" "}
-        to have it reset.
+        <Link
+          href="/forgot-password"
+          className="text-foreground hover:underline"
+        >
+          Forgot your password?
+        </Link>
       </p>
     </form>
   );

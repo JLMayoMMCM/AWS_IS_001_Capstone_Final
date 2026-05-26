@@ -2,7 +2,8 @@
 # S3-compatible store (MinIO). Production uses Amazon RDS and Amazon S3.
 #
 #   docker compose up -d
-#   npm run db:migrate && npm run db:seed
+#   npm run db:migrate
+#   node scripts/_create-admin.mjs admin@example.org change-me
 
 services:
   db:
