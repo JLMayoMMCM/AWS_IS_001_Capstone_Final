@@ -432,6 +432,7 @@ CREATE TRIGGER site_settings_set_updated_at BEFORE UPDATE ON site_settings
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 INSERT INTO site_settings (org_name, short_name, tagline, about, term, contact_email, contact_address, contact_hours)
-VALUES 
-  ('CloudCampus', 'CC', 'Deploy one, configure all the time.', 'CloudCampus is a framework for lightweight organizational website developed
-  in aws environment.', '2026', 'cc@gmail.com', 'CloudCampus', '7:00AM - 5:00PM');
+VALUES
+  ('CloudCampus', 'CC', 'Deploy one, configure all the time.',
+   ARRAY['CloudCampus is a framework for lightweight organizational website developed in aws environment.'],
+   '2026', 'cc@gmail.com', 'CloudCampus', '7:00AM - 5:00PM');

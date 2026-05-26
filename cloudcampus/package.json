@@ -10,10 +10,13 @@
     "db:migrate": "node --env-file-if-exists=.env scripts/db-migrate.mjs",
     "db:seed": "node --env-file-if-exists=.env scripts/db-seed.mjs",
     "db:reset": "npm run db:migrate && npm run db:seed",
-    "db:check": "node --env-file-if-exists=.env scripts/db-check.mjs"
+    "db:check": "node --env-file-if-exists=.env scripts/db-check.mjs",
+    "db:iam-check": "node --env-file-if-exists=.env scripts/db-iam-check.mjs",
+    "s3:iam-check": "node --env-file-if-exists=.env scripts/s3-iam-check.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1052.0",
+    "@aws-sdk/rds-signer": "^3.1052.0",
     "@aws-sdk/s3-request-presigner": "^3.1052.0",
     "@base-ui/react": "^1.5.0",
     "bcryptjs": "^3.0.3",

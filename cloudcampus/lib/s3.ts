@@ -82,23 +82,23 @@ export function isOwnedKey(
 const bucket = process.env.S3_BUCKET ?? "";
 
 /** True when S3 is configured — lets callers degrade gracefully without it. */
-export const s3Configured = Boolean(
-  bucket &&
-    process.env.S3_REGION &&
-    process.env.S3_ACCESS_KEY_ID &&
-    process.env.S3_SECRET_ACCESS_KEY,
-);
+export const s3Configured = Boolean(bucket && process.env.S3_REGION);
 
 let cachedClient: S3Client | null = null;
 
 function client(): S3Client {
   if (!cachedClient) {
+    // Credentials come from the default AWS provider chain — the IAM role
+    // attached to Amplify compute in production. Locally, set S3_ACCESS_KEY_ID
+    // / S3_SECRET_ACCESS_KEY (e.g. for MinIO) or AWS_ACCESS_KEY_ID /
+    // AWS_SECRET_ACCESS_KEY and they'll be picked up here.
+    const accessKeyId = process.env.S3_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
     cachedClient = new S3Client({
       region: process.env.S3_REGION,
-      credentials: {
-        accessKeyId: process.env.S3_ACCESS_KEY_ID ?? "",
-        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? "",
-      },
+      ...(accessKeyId && secretAccessKey
+        ? { credentials: { accessKeyId, secretAccessKey } }
+        : {}),
     });
   }
   return cachedClient;

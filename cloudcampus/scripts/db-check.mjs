@@ -3,22 +3,7 @@
 //
 //   node --env-file-if-exists=.env scripts/db-check.mjs
 
-import pg from "pg";
-
-function makeClient() {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
-    console.error("DATABASE_URL is not set. Copy .env.example to .env first.");
-    process.exit(1);
-  }
-  return new pg.Client({
-    connectionString,
-    ssl:
-      process.env.DATABASE_SSL === "true"
-        ? { rejectUnauthorized: false }
-        : undefined,
-  });
-}
+import { makeClient } from "./_pg-client.mjs";
 
 // [label, SQL, mustReturnRows?] — every statement is read-only.
 const checks = [

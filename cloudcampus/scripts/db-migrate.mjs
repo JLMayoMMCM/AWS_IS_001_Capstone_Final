@@ -7,25 +7,10 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import pg from "pg";
+import { makeClient } from "./_pg-client.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const migrationsDir = join(root, "db", "migrations");
-
-function makeClient() {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
-    console.error("DATABASE_URL is not set. Copy .env.example to .env first.");
-    process.exit(1);
-  }
-  return new pg.Client({
-    connectionString,
-    ssl:
-      process.env.DATABASE_SSL === "true"
-        ? { rejectUnauthorized: false }
-        : undefined,
-  });
-}
 
 async function main() {
   const client = makeClient();

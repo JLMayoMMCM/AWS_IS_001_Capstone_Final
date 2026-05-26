@@ -91,9 +91,11 @@ sign-in.
 |----------|-------------|
 | `DATABASE_URL` | PostgreSQL connection string |
 | `DATABASE_SSL` | `true` against RDS, unset/`false` locally |
+| `DATABASE_IAM_AUTH` | `true` in production to mint an RDS IAM auth token per connection (no DB password in env) |
+| `DATABASE_REGION` | AWS region of the RDS instance — only when `DATABASE_IAM_AUTH=true` and `AWS_REGION` is not set |
 | `JWT_SECRET` | Long random string signing session cookies |
 | `S3_BUCKET`, `S3_REGION` | Target S3 bucket and region |
-| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | S3 credentials |
+| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Local-only S3 credentials (MinIO / developer IAM user). Omit in Amplify — the attached IAM role provides credentials. |
 | `SEED_ADMIN_PASSWORD` | Bootstrap admin password used by `db:seed` |
 
 Secrets live only in `.env` (gitignored). See `db/README.md` for database
