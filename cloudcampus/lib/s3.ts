@@ -6,6 +6,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
+import { fromNodeProviderChain } from "@aws-sdk/credential-providers";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // Server-only S3 access (FEAS §3.2). Binary assets live in S3; the database
@@ -88,10 +89,16 @@ let cachedClient: S3Client | null = null;
 
 function client(): S3Client {
   if (!cachedClient) {
-    // Credentials come from the default AWS provider chain — the IAM role
-    // attached to Amplify compute in production. Locally, set S3_ACCESS_KEY_ID
-    // / S3_SECRET_ACCESS_KEY (e.g. for MinIO) or AWS_ACCESS_KEY_ID /
-    // AWS_SECRET_ACCESS_KEY and they'll be picked up here.
+    // Credentials priority:
+    //   1. explicit S3_ACCESS_KEY_ID / S3_SECRET_ACCESS_KEY  (e.g. MinIO, dev IAM user)
+    //   2. fromNodeProviderChain() — env → SSO → ~/.aws/credentials → role
+    //
+    // We pass a credential PROVIDER (a function) rather than a static object
+    // so the SDK re-resolves credentials when they expire instead of caching
+    // the first set forever. This is what fixes
+    // "CredentialsProviderError: Your session has expired" on dev: once you
+    // run `aws sso login` again the next presigned-URL call gets the new
+    // credentials automatically.
     //
     // S3_ENDPOINT lets local dev point at MinIO (http://localhost:9000) or any
     // S3-compatible store. When set, force path-style addressing because MinIO
@@ -99,12 +106,14 @@ function client(): S3Client {
     const accessKeyId = process.env.S3_ACCESS_KEY_ID;
     const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
     const endpoint = process.env.S3_ENDPOINT;
+    const credentials =
+      accessKeyId && secretAccessKey
+        ? { accessKeyId, secretAccessKey }
+        : fromNodeProviderChain();
     cachedClient = new S3Client({
       region: process.env.S3_REGION,
       ...(endpoint ? { endpoint, forcePathStyle: true } : {}),
-      ...(accessKeyId && secretAccessKey
-        ? { credentials: { accessKeyId, secretAccessKey } }
-        : {}),
+      credentials,
     });
   }
   return cachedClient;
