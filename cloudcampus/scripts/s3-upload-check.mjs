@@ -21,9 +21,22 @@ function log(state, label, hint) {
 
 const bucket = process.env.S3_BUCKET;
 const region = process.env.S3_REGION ?? "ap-southeast-1";
+const accessKeyId = process.env.S3_ACCESS_KEY_ID;
+const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
+const endpoint = process.env.S3_ENDPOINT;
 if (!bucket) { console.error("S3_BUCKET must be set"); process.exit(1); }
+if (!accessKeyId || !secretAccessKey) {
+  console.error("S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY must be set");
+  process.exit(1);
+}
 
-const client = new S3Client({ region });
+// Build the client the same way lib/s3.ts does, so this exercises the exact
+// credential path the app uses.
+const client = new S3Client({
+  region,
+  ...(endpoint ? { endpoint, forcePathStyle: true } : {}),
+  credentials: { accessKeyId, secretAccessKey },
+});
 const key = `_upload-check/${Date.now()}-${randomUUID()}.png`;
 const contentType = "image/png";
 const body = Buffer.from([

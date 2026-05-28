@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(aws iam *)",
+      "Bash(aws s3api *)",
+      "Bash(aws s3 *)",
+      "Bash(aws rds *)",
+      "Bash(aws amplify *)",
+      "Bash(aws ec2 *)"
     ]
   }
 }

@@ -6,7 +6,6 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
-import { fromNodeProviderChain } from "@aws-sdk/credential-providers";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // Server-only S3 access (FEAS §3.2). Binary assets live in S3; the database
@@ -81,39 +80,30 @@ export function isOwnedKey(
 }
 
 const bucket = process.env.S3_BUCKET ?? "";
+const accessKeyId = process.env.S3_ACCESS_KEY_ID ?? "";
+const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY ?? "";
 
 /** True when S3 is configured — lets callers degrade gracefully without it. */
-export const s3Configured = Boolean(bucket && process.env.S3_REGION);
+export const s3Configured = Boolean(
+  bucket && process.env.S3_REGION && accessKeyId && secretAccessKey,
+);
 
 let cachedClient: S3Client | null = null;
 
 function client(): S3Client {
   if (!cachedClient) {
-    // Credentials priority:
-    //   1. explicit S3_ACCESS_KEY_ID / S3_SECRET_ACCESS_KEY  (e.g. MinIO, dev IAM user)
-    //   2. fromNodeProviderChain() — env → SSO → ~/.aws/credentials → role
-    //
-    // We pass a credential PROVIDER (a function) rather than a static object
-    // so the SDK re-resolves credentials when they expire instead of caching
-    // the first set forever. This is what fixes
-    // "CredentialsProviderError: Your session has expired" on dev: once you
-    // run `aws sso login` again the next presigned-URL call gets the new
-    // credentials automatically.
+    // Static credentials from S3_ACCESS_KEY_ID / S3_SECRET_ACCESS_KEY — an IAM
+    // user with scoped Get/Put/Delete/List access on the bucket (or the
+    // MinIO root user locally).
     //
     // S3_ENDPOINT lets local dev point at MinIO (http://localhost:9000) or any
     // S3-compatible store. When set, force path-style addressing because MinIO
     // and most non-AWS endpoints don't serve virtual-hosted-style bucket DNS.
-    const accessKeyId = process.env.S3_ACCESS_KEY_ID;
-    const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
     const endpoint = process.env.S3_ENDPOINT;
-    const credentials =
-      accessKeyId && secretAccessKey
-        ? { accessKeyId, secretAccessKey }
-        : fromNodeProviderChain();
     cachedClient = new S3Client({
       region: process.env.S3_REGION,
       ...(endpoint ? { endpoint, forcePathStyle: true } : {}),
-      credentials,
+      credentials: { accessKeyId, secretAccessKey },
     });
   }
   return cachedClient;

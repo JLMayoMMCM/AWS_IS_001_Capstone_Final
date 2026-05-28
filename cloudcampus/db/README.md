@@ -43,9 +43,8 @@ node scripts/_create-admin.mjs admin@example.org change-me     # creates the fir
 ## How it works
 
 - `scripts/db-migrate.mjs` records applied files in a `schema_migrations`
-  table and runs each new migration in its own transaction. RDS IAM auth is
-  used when `DATABASE_IAM_AUTH=true`; otherwise the password from
-  `DATABASE_URL` is used.
+  table and runs each new migration in its own transaction. It connects with
+  the credentials in `DATABASE_URL` (run as the master user so DDL is allowed).
 - `npm run db:check` runs the read-only assertions in `scripts/db-check.mjs`
   to confirm the live schema still matches what the application code expects.
 
@@ -69,6 +68,11 @@ The schema enforces several SRS rules directly in the database:
 ## Production
 
 Production uses Amazon RDS for PostgreSQL. Set `DATABASE_URL` to the RDS
-endpoint, `DATABASE_SSL=true`, and `DATABASE_IAM_AUTH=true` (with a
-passwordless URL pointing at the `cloudcampus_app` IAM-auth role), then run
-`npm run db:migrate`.
+endpoint with the `cloudcampus_app` user + password and `DATABASE_SSL=true`.
+Run migrations as the master user by overriding `DATABASE_URL` on the command
+line (the app user has DML grants only, not DDL):
+
+```
+DATABASE_URL=postgresql://cloudcampus:<master-password>@<rds-endpoint>:5432/cloudcampus \
+DATABASE_SSL=true npm run db:migrate
+```

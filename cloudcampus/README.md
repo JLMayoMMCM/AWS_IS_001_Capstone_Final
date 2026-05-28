@@ -46,7 +46,7 @@ cloudcampus/
   lib/               db, queries, auth, jwt, s3, types, org, lookups
   db/
     migrations/      ordered SQL migrations (0001 — consolidated schema)
-  scripts/           db-migrate / db-check / IAM diagnostics / SMTP check
+  scripts/           db-migrate / db-check / S3 upload check / SMTP check
   proxy.ts           optimistic auth gate (Next.js "Proxy")
 ```
 
@@ -77,8 +77,6 @@ they do not create any admin or placeholder member.
 | `npm run lint` | ESLint |
 | `npm run db:migrate` | Apply pending SQL migrations |
 | `npm run db:check` | Read-only check that the schema matches the code |
-| `npm run db:iam-check` | Verify the RDS IAM-auth path end-to-end |
-| `npm run s3:iam-check` | Verify the S3 IAM-credentialed path end-to-end |
 | `npm run s3:upload-check` | Verify the direct-to-S3 upload + presigned-URL flow |
 | `npm run smtp:check` | Verify the SMTP credentials and send a self-ping |
 
@@ -90,13 +88,11 @@ they do not create any admin or placeholder member.
 
 | Variable | Description |
 |----------|-------------|
-| `DATABASE_URL` | PostgreSQL connection string |
+| `DATABASE_URL` | PostgreSQL connection string (credentials embedded) |
 | `DATABASE_SSL` | `true` against RDS, unset/`false` locally |
-| `DATABASE_IAM_AUTH` | `true` in production to mint an RDS IAM auth token per connection (no DB password in env) |
-| `DATABASE_REGION` | AWS region of the RDS instance — only when `DATABASE_IAM_AUTH=true` and `AWS_REGION` is not set |
 | `JWT_SECRET` | Long random string signing session cookies |
 | `S3_BUCKET`, `S3_REGION` | Target S3 bucket and region |
-| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Local-only S3 credentials (MinIO / developer IAM user). Omit in Amplify — the attached IAM role provides credentials. |
+| `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Access-key pair for an IAM user scoped to the bucket (MinIO root user locally). Required in both local and Amplify environments. |
 | `smtp_email`, `smtp_pass` | Gmail SMTP user + App Password for outbound mail (password reset, registration decisions, email-change confirmations). Falls back to stdout when unset. |
 
 Secrets live only in `.env` (gitignored). See `db/README.md` for database
